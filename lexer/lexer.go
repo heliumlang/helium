@@ -126,6 +126,12 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 			token, err = l.lexString()
 		} else if char == '\'' {
 			token, err = l.lexChar()
+		} else if isSym(char) {
+			token = NewToken([]byte{char}, Symbol)
+			l.i++
+		} else if isPunct(char) {
+			token = NewToken([]byte{char}, Punct)
+			l.i++
 		} else {
 			l.i++
 		}

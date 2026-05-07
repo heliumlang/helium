@@ -12,11 +12,23 @@ const (
 	Digit
 	String
 	Char
+	Symbol
+	Punct
 )
 
 // fill later
 var reserved = []string{
 	"if",
+}
+
+// fill later
+var symbols = []string{
+	"+", "-", "*", "/", "=",
+}
+
+// fill later
+var punct = []string{
+	".", ":", ";", "(", ")", "[", "]", "{", "}",
 }
 
 var kindToString = map[TokenKind]string{
@@ -27,6 +39,8 @@ var kindToString = map[TokenKind]string{
 	Digit:    "Digit",
 	String:   "String",
 	Char:     "Char",
+	Symbol:   "Symbol",
+	Punct:    "Punctuation",
 }
 
 func (k TokenKind) String() string {
@@ -47,6 +61,11 @@ func NewToken(lexeme []byte, kind TokenKind) *Token {
 		lexeme: lexeme,
 		kind:   kind,
 	}
+}
+
+// for later (parser)
+func (t *Token) Match(s string) bool {
+	return string(t.lexeme) == s
 }
 
 func (t *Token) String() string {

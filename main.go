@@ -12,7 +12,7 @@ func main() {
 	start := time.Now()
 
 	l := lexer.New()
-	input := `123 456.789 hello _world "string 123 hellooo" 'c' if`
+	input := `123 456.789 hello _world "string 123 hellooo" 'c' if .(){}[]+-*/`
 
 	tokens, err := l.Lex(input)
 	if err != nil {

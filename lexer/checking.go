@@ -13,3 +13,11 @@ func isAlpha(c byte) bool {
 func isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
 }
+
+func isSym(c byte) bool {
+	return slices.Contains(symbols, string(c))
+}
+
+func isPunct(c byte) bool {
+	return slices.Contains(punct, string(c))
+}
