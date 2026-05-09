@@ -1,0 +1,16 @@
+module main
+
+fn divide(a float, b float) float! {
+    if b == 0.0 {
+        raise "division by zero"
+    }
+    return a / b
+}
+
+fn main() {
+    result := divide(10.0, 0.0) catch err {
+        println("error:", err)
+        return
+    }
+    println(result)
+}

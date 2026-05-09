@@ -1,0 +1,35 @@
+module main
+
+interface Animal {
+    fn EmitSound()
+    const int paws
+}
+
+struct Dog is Animal {
+    @paws = 4
+}
+
+fn [d Dog] EmitSound() {
+    println("woof woof!")
+}
+
+struct Chicken is Animal {
+    @paws = 2
+}
+
+fn [c Chicken] EmitSound() {
+    println("cluck cluck!")
+}
+
+fn DoubleSound(Animal a) {
+    a.EmitSound()
+    a.EmitSound()
+}
+
+fn main() {
+    dog := new Dog()
+    chicken := new Chicken()
+
+    DoubleSound(dog)
+    DoubleSound(chicken)
+}

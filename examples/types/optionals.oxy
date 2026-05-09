@@ -1,0 +1,35 @@
+module main
+
+record User {
+    string name
+}
+
+struct UserStorage {
+    map<long, User> users
+    long lastID
+}
+
+fn [us UserStorage] addUser(string name) {
+    user := new User(name: name, id: us.lastID++)
+    us.users.insert(user)
+}
+
+fn [us UserStorage] findUser(long id) User? {
+    user, exists := us.users[id]
+    return exists ? user : none
+}
+
+const anonymous = new User(name: "Anonymous")
+
+fn main() {
+    storage := new UserStorage()
+    storage.addUser("Alice")
+
+    user := storage.findUser(1) ?? {
+        raise "User not found"
+    }
+    println(name)
+
+    user2 := findUser(2) ?? anonymous
+    println(user2.name)
+}

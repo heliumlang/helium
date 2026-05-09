@@ -1,0 +1,25 @@
+module main
+
+fn apply(nums int[], f fn(int) int) int[] {
+    result := []int
+    for _, n in nums {
+        result.append(f(n))
+    }
+    return result
+}
+
+fn main() {
+    nums := [1, 2, 3, 4, 5]
+
+    doubled := apply(nums, fn(x int) int {
+        return x * 2
+    })
+
+    factor := 10
+    scaled := apply(nums, fn(x int) int {
+        return x * factor
+    })
+
+    println(doubled)
+    println(scaled)
+}

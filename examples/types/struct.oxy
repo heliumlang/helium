@@ -1,0 +1,32 @@
+module main
+
+struct Point {
+export:
+    int x
+    int y
+}
+
+fn [a Point] add(Point b) Point {
+    return new Point(x: a.x + b.x, y: a.y + b.y)
+}
+
+struct Person {
+export:
+    string name
+    string surname
+    string fullname
+
+    init(string name, surname) {
+        @name = name
+        @surname = surname
+        @fullname = name + " " + surname
+    }
+}
+
+fn main() {
+    p1, p2 := new Point(x: 5, y: 2), new Point(x: 3, y: 1)
+    p3 := p1.add(p2)
+
+    person := new Person("John", "Doe")
+    println(person.fullname)
+}

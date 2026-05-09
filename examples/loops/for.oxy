@@ -1,0 +1,27 @@
+module main
+
+struct StringList is Iterable<string> {
+    string[] strings
+
+    init(string... strings) {
+        @strings = strings.collect()
+    }
+}
+
+fn [sl StringList] Iter(int index) int, string? {
+    return index + 1, index <= sl.strings.len ? sl.strings[index] : none
+}
+
+fn main() {
+    numbers := [1, 2, 3, 4, 5]
+
+    for index, value in numbers {
+        println(index, value)
+    }
+
+    strings := new StringList("hello", "zebra", "world")
+
+    for index, value in strings {
+        println(index, value)
+    }
+}

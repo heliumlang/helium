@@ -1,0 +1,22 @@
+module main
+
+enum Direction {
+    North
+    South
+    East
+    West
+}
+
+initials := map<Direction, char>{
+    North: 'N',
+    South: 'S',
+    East: 'E',
+    West: 'W'
+}
+
+fn main() {
+    d := Direction.North
+
+    println(d) # North
+    println(initials[d]) # N
+}

@@ -1,0 +1,17 @@
+module main
+
+# can't have methods, initializers or unexported fields;
+# made to just carry data
+record Person {
+    string name
+    int age
+}
+
+fn minor(Person p) bool {
+    return p.age < 18
+}
+
+fn main() {
+    p := new Person(name: "John", age: 17)
+    println(minor(p))
+}
