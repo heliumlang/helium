@@ -3,7 +3,6 @@ package lexer
 import (
 	"errors"
 	"fmt"
-	"slices"
 )
 
 type Lexer interface {
@@ -33,24 +32,32 @@ func (l *lexer) lexIdent() (*Token, error) {
 	var lexeme []byte
 	kind := Ident
 
-	for l.inbounds() && (isAlpha(l.curr()) || l.curr() == '_') {
+	lexeme = append(lexeme, l.input[l.i])
+	l.i++
+
+	for l.inbounds() && (isAlpha(l.curr()) || isDigit(l.curr()) || l.curr() == '_') {
 		lexeme = append(lexeme, l.curr())
 		l.i++
 	}
 
-	if slices.Contains(reserved, string(lexeme)) {
-		kind = Reserved
+	if ok, k := isKeyword(lexeme); ok {
+		kind = k
 	}
 	return NewToken(lexeme, kind), nil
 }
 
 func (l *lexer) lexDigit() (*Token, error) {
-	var lexeme []byte
+	var (
+		lexeme []byte
+		kind   TokenKind = Integer
+	)
+
 	for l.inbounds() && isDigit(l.curr()) {
 		lexeme = append(lexeme, l.curr())
 		l.i++
 	}
 	if l.inbounds() && l.curr() == '.' {
+		kind = Float
 		lexeme = append(lexeme, l.curr())
 		l.i++
 		for l.inbounds() && isDigit(l.curr()) {
@@ -59,7 +66,7 @@ func (l *lexer) lexDigit() (*Token, error) {
 		}
 	}
 
-	return NewToken(lexeme, Digit), nil
+	return NewToken(lexeme, kind), nil
 }
 
 func (l *lexer) lexString() (*Token, error) {
@@ -105,20 +112,31 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
+	line, col := 1, 1
 
 	for l.inbounds() {
+		starti := l.i
 		char := input[l.i]
-		if isWhitespace(char) {
-			l.i++
-			continue
-		}
 
 		var (
 			token *Token = NewToken([]byte(""), None)
 			err   error  = nil
 		)
 
-		if isAlpha(char) || char == '_' {
+		startCol := col
+		if isWhitespace(char) {
+			if char == '\n' || char == '\r' {
+				line++
+				col = 1
+				token = NewToken([]byte{char}, Newline)
+			} else {
+				col++
+			}
+			l.i++
+			if token.kind == None {
+				continue
+			}
+		} else if isAlpha(char) || char == '_' {
 			token, err = l.lexIdent()
 		} else if isDigit(char) {
 			token, err = l.lexDigit()
@@ -126,24 +144,47 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 			token, err = l.lexString()
 		} else if char == '\'' {
 			token, err = l.lexChar()
-		} else if isSym(char) {
-			token = NewToken([]byte{char}, Symbol)
-			l.i++
-		} else if isPunct(char) {
-			token = NewToken([]byte{char}, Punct)
-			l.i++
 		} else {
-			l.i++
+			matched := false
+			for _, length := range []int{3, 2, 1} {
+				if l.i+length > l.n {
+					continue
+				}
+				slice := l.input[l.i : l.i+length]
+				if ok, k, _ := isOp(slice); ok {
+					token = NewToken([]byte(slice), k)
+					l.i += length
+					matched = true
+					break
+				}
+				if ok, k, _ := isPunct(slice); ok {
+					token = NewToken([]byte(slice), k)
+					l.i += length
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				l.i++
+			}
 		}
+		col += l.i - starti
 
 		if err != nil {
 			return nil, err
 		}
 
 		if len(token.lexeme) > 0 {
+			token.line = line
+			token.col = startCol
 			l.tokens = append(l.tokens, token)
 		}
 	}
-	l.tokens = append(l.tokens, NewToken([]byte(""), EOF))
+
+	eof := NewToken([]byte(""), EOF)
+	eof.line = line
+	eof.col = col - 1
+	l.tokens = append(l.tokens, eof)
+
 	return l.tokens, nil
 }
