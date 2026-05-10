@@ -10,7 +10,7 @@ type TokenKind int
 const (
 	None TokenKind = iota
 	EOF
-	Newline
+	NewLine
 	Ident
 	Reserved
 	Integer

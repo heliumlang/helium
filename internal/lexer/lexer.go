@@ -118,6 +118,14 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 		starti := l.i
 		char := input[l.i]
 
+		if char == '#' {
+			l.i++
+			for l.curr() != '\n' {
+				l.i++
+			}
+			continue
+		}
+
 		var (
 			token *Token = NewToken([]byte(""), None)
 			err   error  = nil
@@ -128,7 +136,7 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 			if char == '\n' || char == '\r' {
 				line++
 				col = 1
-				token = NewToken([]byte{char}, Newline)
+				token = NewToken([]byte{char}, NewLine)
 			} else {
 				col++
 			}
@@ -174,11 +182,9 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 			return nil, err
 		}
 
-		if len(token.lexeme) > 0 {
-			token.line = line
-			token.col = startCol
-			l.tokens = append(l.tokens, token)
-		}
+		token.line = line
+		token.col = startCol
+		l.tokens = append(l.tokens, token)
 	}
 
 	eof := NewToken([]byte(""), EOF)

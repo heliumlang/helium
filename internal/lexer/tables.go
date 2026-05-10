@@ -102,5 +102,5 @@ var tokenNames = map[TokenKind]string{
 	Float:    "Float",
 	String:   "String",
 	Char:     "Char",
-	Newline:  "New line",
+	NewLine:  "New line",
 }
