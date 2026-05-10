@@ -105,7 +105,7 @@ equality_expr   = relational_expr , { ( "==" | "!=" ) , relational_expr } ;
 
 relational_expr = coalesce_expr , { ( "<" | ">" | "<=" | ">=" ) , coalesce_expr } ;
 
-coalesce_expr   = additive_expr , { "??" , additive_expr } ;
+coalesce_expr   = additive_expr , { "??" , ( block | additive_expr ) } ;
 
 additive_expr   = mult_expr , { ( "+" | "-" ) , mult_expr } ;
 
@@ -147,6 +147,8 @@ float_lit       = DIGIT , { DIGIT } , "." , DIGIT , { DIGIT } ;
 string_lit      = '"' , { any_char } , '"' ;
 bool_lit        = "true" | "false" ;
 array_lit       = "[" , [ expr , { "," , expr } ] , "]" ;
+map_lit         = "{", [ map_pair, { ",", map_pair } ], "}" ;
+map_pair        = expr, ":", expr ;
 none_lit        = "none" ;
 
 (* Primitives *)

@@ -102,8 +102,16 @@ func (p *Parser) parseCoalesce() Node {
 	left := p.parseAdditive()
 	for p.match(lexer.OpFallback) {
 		p.advance()
-		right := p.parseAdditive()
-		left = BinaryExpr{Left: left, Right: right, Op: "??"}
+		var (
+			right Node = nil
+			block []Node
+		)
+		if p.match(lexer.PunctLBrace) {
+			block = p.parseBlock()
+		} else {
+			right = p.parseAdditive()
+		}
+		left = CoalesceExpr{Left: left, Right: right, Block: block}
 	}
 	return left
 }
@@ -157,7 +165,7 @@ func (p *Parser) parseCatch() Node {
 	if p.match(lexer.KeywordCatch) {
 		p.advance()
 		name := p.mustRead(lexer.Ident)
-		body := block(p, lexer.PunctLBrace, lexer.PunctRBrace, p.parseStatement)
+		body := p.parseBlock()
 		return CatchExpr{Operand: operand, ErrIdent: name, Body: body}
 	}
 	return operand
@@ -175,8 +183,13 @@ func (p *Parser) parsePostfix() Node {
 			node = ForceUnwrap{Operand: node}
 
 		case lexer.OpQuestion:
-			p.advance()
-			node = OptionalChain{Operand: node}
+			next := p.get(1).Kind()
+			if next == lexer.PunctPeriod || next == lexer.PunctLBracket {
+				p.advance()
+				node = OptionalChain{Operand: node}
+			} else {
+				return node
+			}
 
 		case lexer.PunctLBracket:
 			p.advance()
@@ -230,6 +243,9 @@ func (p *Parser) parsePrimary() Node {
 	case lexer.PunctLBracket:
 		return p.parseArrayLit()
 
+	case lexer.PunctLBrace:
+		return p.parseMapLit()
+
 	case lexer.KeywordTrue:
 		p.advance()
 		return BoolLit{Value: true}
@@ -261,13 +277,19 @@ func (p *Parser) parsePrimary() Node {
 		p.advance()
 		return StringLit{Value: raw}
 
+	case lexer.Char:
+		raw := p.get(0).Lexeme()
+		p.advance()
+		return CharLit{Value: raw[0]}
+
 	case lexer.Ident:
 		name := p.get(0).Lexeme()
 		p.advance()
 		return Ident{Name: name}
 
 	default:
-		panic(fmt.Sprintf("unexpected token in expression: %s", p.get(0).Lexeme()))
+		p.error(fmt.Sprintf("unexpected \x1b[33m%s\x1b[0m in expression", t.Kind()), t.Pos())
+		return nil
 	}
 }
 
@@ -291,16 +313,15 @@ func (p *Parser) parseClosure() Node {
 	p.mustSkip(lexer.KeywordFn)
 	p.mustSkip(lexer.PunctLParen)
 	params := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
-	var returns []string
-	for p.match(lexer.Ident) {
-		returns = append(returns, p.get(0).Lexeme())
-		p.advance()
-		if !p.match(lexer.PunctComma) {
-			break
+	var returns []Node
+	if !p.match(lexer.PunctLBrace) {
+		returns = append(returns, p.parseType())
+		for p.match(lexer.PunctComma) {
+			p.advance()
+			returns = append(returns, p.parseType())
 		}
-		p.advance()
 	}
-	body := block(p, lexer.PunctLBrace, lexer.PunctRBrace, p.parseStatement)
+	body := p.parseBlock()
 	return ClosureExpr{Params: params, Returns: returns, Body: body}
 }
 
@@ -312,9 +333,32 @@ func (p *Parser) parseArrayLit() Node {
 	return ArrayLit{Elements: elements}
 }
 
+func (p *Parser) parseMapLit() Node {
+	ti := p.enterRule("parse map literal")
+	defer p.traceRm(ti)
+	p.mustSkip(lexer.PunctLBrace)
+	elements := list(p, lexer.PunctComma, lexer.PunctRBrace, p.parseMapPair)
+	return MapLit{Elements: elements}
+}
+
+func (p *Parser) parseMapPair() Node {
+	key := p.parseExpr()
+	p.mustSkip(lexer.PunctColon)
+	value := p.parseExpr()
+	return MapPair{
+		Key:   key,
+		Value: value,
+	}
+}
+
 func (p *Parser) parseArg() Arg {
 	ti := p.enterRule("parse argument")
 	defer p.traceRm(ti)
+
+	for p.match(lexer.NewLine) {
+		p.advance()
+	}
+
 	var arg Arg
 	if p.match(lexer.Ident) && p.get(1).Kind() == lexer.PunctColon {
 		name := p.mustRead(lexer.Ident)
@@ -326,5 +370,10 @@ func (p *Parser) parseArg() Arg {
 		p.advance()
 		arg.Spread = true
 	}
+
+	for p.match(lexer.NewLine) {
+		p.advance()
+	}
+
 	return arg
 }

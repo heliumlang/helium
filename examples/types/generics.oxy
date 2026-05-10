@@ -1,10 +1,10 @@
 module main
 
 struct Stack<T> {
-    [T] items
+    T[] items
 }
 
-fn [s Stack<T>] push(item T) {
+fn [s Stack<T>] push(T item) {
     s.items.append(item)
 }
 

@@ -16,7 +16,7 @@ export:
     string surname
     string fullname
 
-    init(string name, surname) {
+    init(string name, string surname) {
         @name = name
         @surname = surname
         @fullname = name + " " + surname

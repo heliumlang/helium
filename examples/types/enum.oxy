@@ -7,11 +7,11 @@ enum Direction {
     West
 }
 
-initials := map<Direction, char>{
+initials := {
     North: 'N',
     South: 'S',
     East: 'E',
-    West: 'W'
+    West: 'W',
 }
 
 fn main() {

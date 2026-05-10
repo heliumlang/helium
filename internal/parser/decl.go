@@ -11,7 +11,7 @@ func (p *Parser) parseModule() Node {
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordModule)
 	name := p.mustRead(lexer.Ident)
-	p.mustSkip(lexer.Newline)
+	p.mustSkip(lexer.NewLine)
 	return &Module{Name: name}
 }
 
@@ -21,12 +21,14 @@ func (p *Parser) parseDecl() Node {
 	var annotations []Annotation
 	for p.match(lexer.OpAt) {
 		annotations = append(annotations, p.parseAnnotation())
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 	}
 	t := p.get(0)
 	switch t.Kind() {
+	case lexer.Ident:
+		return p.parseVarDecl()
 	case lexer.KeywordFn:
 		return p.parseFuncWithAnnotations(annotations)
 	case lexer.KeywordStruct:
@@ -42,6 +44,9 @@ func (p *Parser) parseDecl() Node {
 	case lexer.KeywordAlias:
 		return p.parseAlias()
 	case lexer.KeywordConst:
+		if p.isDeclAssign() {
+			return p.parseVarDecl()
+		}
 		return p.parseConst()
 	default:
 		p.error(fmt.Sprintf("expected declaration, got \x1b[33m%s\x1b[0m", t.Kind()), t.Pos())
@@ -63,13 +68,38 @@ func (p *Parser) parseAnnotation() Annotation {
 	return Annotation{Name: name, Value: value}
 }
 
+func (p *Parser) parseVarDecl() Node {
+	ti := p.enterRule("parse variable declaration")
+	defer p.traceRm(ti)
+	_const := false
+	if p.match(lexer.KeywordConst) {
+		_const = true
+		p.advance()
+	}
+	idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
+		return p.mustRead(lexer.Ident)
+	})
+	var exprs []Node
+	for {
+		exprs = append(exprs, p.parseExpr())
+		if !p.match(lexer.PunctComma) {
+			break
+		}
+		p.advance()
+	}
+	if p.match(lexer.NewLine) {
+		p.advance()
+	}
+	return VarDecl{Idents: idents, Exprs: exprs, Const: _const}
+}
+
 func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
 	ti := p.enterRule("parse function declaration")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordFn)
 	var (
 		recv    *Receiver = nil
-		returns Node      = nil
+		returns []Node
 	)
 	if p.match(lexer.PunctLBracket) {
 		p.advance()
@@ -79,15 +109,21 @@ func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
 		p.mustSkip(lexer.PunctRBracket)
 	}
 	name := p.mustRead(lexer.Ident)
+	var typeArgs []Node
+	if p.match(lexer.OpSmaller) {
+		typeArgs = p.parseTypeArgs()
+	}
 	p.mustSkip(lexer.PunctLParen)
 	args := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
 	if !p.match(lexer.PunctLBrace) {
-		returns = p.parseType()
+		returns = list(p, lexer.PunctComma, lexer.PunctLBrace, p.parseType)
+		p.index--
 	}
 	body := p.parseBlock()
 	return &FunctionDecl{
 		Name:        name,
 		Args:        args,
+		TypeArgs:    typeArgs,
 		Body:        body,
 		Recv:        recv,
 		Returns:     returns,
@@ -118,14 +154,14 @@ func (p *Parser) parseRecordBody() []Node {
 	p.mustSkip(lexer.PunctLBrace)
 	var fields []Node
 	for !p.match(lexer.PunctRBrace) {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) {
 			break
 		}
 		fields = append(fields, p.parseStructField())
-		p.mustSkip(lexer.Newline)
+		p.mustSkip(lexer.NewLine)
 	}
 	p.mustSkip(lexer.PunctRBrace)
 	return fields
@@ -143,7 +179,7 @@ func (p *Parser) parseInterface() Node {
 	p.mustSkip(lexer.PunctLBrace)
 	var members []Node
 	for !p.match(lexer.PunctRBrace) {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) {
@@ -173,9 +209,13 @@ func (p *Parser) parseFnSig() Node {
 	name := p.mustRead(lexer.Ident)
 	p.mustSkip(lexer.PunctLParen)
 	args := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
-	var returns Node
-	if !p.match(lexer.Newline) && !p.match(lexer.PunctRBrace) {
-		returns = p.parseType()
+	var returns []Node
+	if !p.match(lexer.NewLine) && !p.match(lexer.PunctRBrace) {
+		returns = append(returns, p.parseType())
+		for p.match(lexer.PunctComma) {
+			p.advance()
+			returns = append(returns, p.parseType())
+		}
 	}
 	return FnSig{Name: name, Args: args, Returns: returns}
 }
@@ -188,7 +228,7 @@ func (p *Parser) parseEnum() Node {
 	p.mustSkip(lexer.PunctLBrace)
 	var variants []EnumVariant
 	for !p.match(lexer.PunctRBrace) {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) {
@@ -209,7 +249,7 @@ func (p *Parser) parseEnumVariant() EnumVariant {
 		p.advance()
 		params = list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
 	}
-	for p.match(lexer.Newline) {
+	for p.match(lexer.NewLine) {
 		p.advance()
 	}
 	return EnumVariant{Name: name, Params: params}
@@ -223,7 +263,7 @@ func (p *Parser) parseVariant() Node {
 	p.mustSkip(lexer.PunctLBrace)
 	var fields []VariantField
 	for !p.match(lexer.PunctRBrace) {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) {
@@ -240,7 +280,7 @@ func (p *Parser) parseVariantField() VariantField {
 	defer p.traceRm(ti)
 	t := p.parseType()
 	name := p.mustRead(lexer.Ident)
-	for p.match(lexer.Newline) {
+	for p.match(lexer.NewLine) {
 		p.advance()
 	}
 	return VariantField{Type: t, Name: name}
@@ -276,12 +316,10 @@ func (p *Parser) parseStruct() Node {
 	if p.match(lexer.OpSmaller) {
 		generics = p.parseTypeArgs()
 	}
-	var interfaces []string
+	var interfaces []Node
 	if p.match(lexer.KeywordIs) {
 		p.advance()
-		interfaces = list(p, lexer.PunctComma, lexer.PunctLBrace, func() string {
-			return p.mustRead(lexer.Ident)
-		})
+		interfaces = list(p, lexer.PunctComma, lexer.PunctLBrace, p.parseType)
 		p.index--
 	}
 	unexported, exported, inits := p.parseStructBody()
@@ -306,7 +344,7 @@ func (p *Parser) parseStructBody() ([]Node, []Node, []Init) {
 		reachedExport = false
 	)
 	for !p.match(lexer.PunctRBrace) {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) {
@@ -319,7 +357,7 @@ func (p *Parser) parseStructBody() ([]Node, []Node, []Init) {
 		if p.match(lexer.KeywordExport) {
 			p.advance()
 			p.mustSkip(lexer.PunctColon)
-			p.mustSkip(lexer.Newline)
+			p.mustSkip(lexer.NewLine)
 			reachedExport = true
 			continue
 		}
@@ -329,7 +367,7 @@ func (p *Parser) parseStructBody() ([]Node, []Node, []Init) {
 		} else {
 			unexported = append(unexported, field)
 		}
-		p.mustSkip(lexer.Newline)
+		p.mustSkip(lexer.NewLine)
 	}
 	p.mustSkip(lexer.PunctRBrace)
 	return unexported, exported, inits
@@ -363,8 +401,11 @@ func (p *Parser) parseStructField() Node {
 
 func (p *Parser) parseDeclArg() DeclArg {
 	_type := p.parseType()
-	name := p.mustRead(lexer.Ident)
 	variadic := p.match(lexer.PunctEllipsis)
+	if variadic {
+		p.advance()
+	}
+	name := p.mustRead(lexer.Ident)
 
 	return DeclArg{
 		Type:     _type,

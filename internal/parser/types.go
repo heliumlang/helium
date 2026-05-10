@@ -56,9 +56,13 @@ func (p *Parser) parseFunctionType() Node {
 	p.mustSkip(lexer.KeywordFn)
 	p.mustSkip(lexer.PunctLParen)
 	args := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseType)
-	var returns Node
+	var returns []Node
 	if p.oneOf(lexer.Ident, lexer.KeywordFn) {
-		returns = p.parseType()
+		returns = append(returns, p.parseType())
+		for p.match(lexer.PunctComma) {
+			p.advance()
+			returns = append(returns, p.parseType())
+		}
 	}
 	return FunctionType{Args: args, Returns: returns}
 }

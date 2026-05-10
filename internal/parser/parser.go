@@ -69,10 +69,6 @@ func (p *Parser) error(msg string, pos lexer.Position) {
 	snapshot := make([]traceEntry, len(p.trace))
 	copy(snapshot, p.trace)
 
-	fmt.Printf("\x1b[91mparsing error\x1b[0m in file \x1b[32m%s\x1b[0m at \x1b[35m%d:%d\x1b[0m:\n",
-		p.filename, pos.Line, pos.Col)
-	fmt.Printf("\x1b[90m└──\x1b[0m %s\n", msg)
-	fmt.Println()
 	fmt.Println("\x1b[34mTrace stack:\x1b[0m")
 
 	if len(snapshot) == 0 {
@@ -96,6 +92,11 @@ func (p *Parser) error(msg string, pos lexer.Position) {
 		fmt.Printf("\n\x1b[90mcurrent token:\x1b[0m \x1b[32m'%s'\x1b[0m \x1b[90m(kind=%v)\x1b[0m\n",
 			t.Lexeme(), t.Kind())
 	}
+	fmt.Println()
+
+	fmt.Printf("\x1b[91mparsing error\x1b[0m in file \x1b[32m%s\x1b[0m at \x1b[35m%d:%d\x1b[0m:\n",
+		p.filename, pos.Line, pos.Col)
+	fmt.Printf("\x1b[90m└──\x1b[0m %s\n", msg)
 
 	panic(parseError{})
 }
@@ -120,7 +121,7 @@ func (p *Parser) Parse() []Node {
 	prog := &Program{}
 	prog.Items = append(prog.Items, p.parseModule())
 	for !p.isEOF() {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.isEOF() {

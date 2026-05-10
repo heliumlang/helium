@@ -129,11 +129,11 @@ func bodyChild(body []Node) *treeNode {
 	return branch("body", nodesToChildren(body)...)
 }
 
-func returnsChild(returns Node) *treeNode {
-	if returns == nil {
+func returnsChild(returns []Node) *treeNode {
+	if len(returns) == 0 || returns == nil {
 		return leaf("returns: void")
 	}
-	return leaf("returns: " + returns.String())
+	return leaf("returns: " + join(returns))
 }
 
 type Program struct {
@@ -194,7 +194,7 @@ func (n BaseType) String() string {
 type FunctionType struct {
 	base
 	Args    []Node
-	Returns Node
+	Returns []Node
 }
 
 func (n FunctionType) tree() *treeNode {
@@ -209,7 +209,7 @@ func (n FunctionType) String() string {
 	}
 	ret := "void"
 	if n.Returns != nil {
-		ret = n.Returns.String()
+		ret = join(n.Returns)
 	}
 	return fmt.Sprintf("fn(%s) %s", strings.Join(args, ", "), ret)
 }
@@ -234,6 +234,10 @@ type StringLit struct {
 	base
 	Value string
 }
+type CharLit struct {
+	base
+	Value byte
+}
 type BoolLit struct {
 	base
 	Value bool
@@ -243,12 +247,14 @@ type NoneLit struct{ base }
 func (n IntLit) tree() *treeNode    { return leaf(fmt.Sprintf("%d", n.Value)) }
 func (n FloatLit) tree() *treeNode  { return leaf(fmt.Sprintf("%g", n.Value)) }
 func (n StringLit) tree() *treeNode { return leaf(fmt.Sprintf("%q", n.Value)) }
+func (n CharLit) tree() *treeNode   { return leaf(fmt.Sprintf("%q", n.Value)) }
 func (n BoolLit) tree() *treeNode   { return leaf(fmt.Sprintf("%t", n.Value)) }
 func (n NoneLit) tree() *treeNode   { return leaf("none") }
 
 func (n IntLit) String() string    { return n.tree().String() }
 func (n FloatLit) String() string  { return n.tree().String() }
 func (n StringLit) String() string { return n.tree().String() }
+func (n CharLit) String() string   { return n.tree().String() }
 func (n BoolLit) String() string   { return n.tree().String() }
 func (n NoneLit) String() string   { return n.tree().String() }
 
@@ -259,6 +265,26 @@ type ArrayLit struct {
 
 func (n ArrayLit) tree() *treeNode { return branch("[]", nodesToChildren(n.Elements)...) }
 func (n ArrayLit) String() string  { return n.tree().String() }
+
+type MapPair struct {
+	base
+	Key   Node
+	Value Node
+}
+type MapLit struct {
+	base
+	Elements []Node
+}
+
+func (n MapPair) tree() *treeNode {
+	return branch("pair", nodesToChildren([]Node{n.Key, n.Value})...)
+}
+func (n MapLit) tree() *treeNode {
+	return branch("{}", nodesToChildren(n.Elements)...)
+}
+
+func (n MapPair) String() string { return n.tree().String() }
+func (n MapLit) String() string  { return n.tree().String() }
 
 type Ident struct {
 	base
@@ -311,6 +337,12 @@ func (n UnaryExpr) String() string   { return n.tree().String() }
 func (n BinaryExpr) String() string  { return n.tree().String() }
 func (n TernaryExpr) String() string { return n.tree().String() }
 
+type CoalesceExpr struct {
+	base
+	Block []Node
+	Left  Node
+	Right Node
+}
 type GroupExpr struct {
 	base
 	Inner Node
@@ -333,12 +365,23 @@ type OptionalChain struct {
 	Operand Node
 }
 
+func (n CoalesceExpr) tree() *treeNode {
+	var children []*treeNode
+	children = append(children, branch("left", nodeTree(n.Left)))
+	if len(n.Block) > 0 {
+		children = append(children, branch("block", nodesToChildren(n.Block)...))
+	} else {
+		children = append(children, branch("right", nodeTree(n.Right)))
+	}
+	return branch("??", children...)
+}
 func (n GroupExpr) tree() *treeNode     { return branch("()", nodeTree(n.Inner)) }
 func (n FieldAccess) tree() *treeNode   { return branch("."+n.Field, nodeTree(n.Object)) }
 func (n IndexExpr) tree() *treeNode     { return branch("[]", nodeTree(n.Object), nodeTree(n.Index)) }
 func (n ForceUnwrap) tree() *treeNode   { return branch("!", nodeTree(n.Operand)) }
 func (n OptionalChain) tree() *treeNode { return branch("?", nodeTree(n.Operand)) }
 
+func (n CoalesceExpr) String() string  { return n.tree().String() }
 func (n GroupExpr) String() string     { return n.tree().String() }
 func (n FieldAccess) String() string   { return n.tree().String() }
 func (n IndexExpr) String() string     { return n.tree().String() }
@@ -433,14 +476,14 @@ func (n CatchExpr) String() string { return n.tree().String() }
 type ClosureExpr struct {
 	base
 	Params  []DeclArg
-	Returns []string
+	Returns []Node
 	Body    []Node
 }
 
 func (n ClosureExpr) tree() *treeNode {
 	ret := "void"
 	if len(n.Returns) > 0 {
-		ret = strings.Join(n.Returns, ", ")
+		ret = join(n.Returns)
 	}
 	return branch("fn",
 		paramsChild(n.Params),
@@ -454,6 +497,7 @@ type VarDecl struct {
 	base
 	Idents []string
 	Exprs  []Node
+	Const  bool
 }
 
 type Return struct {
@@ -472,7 +516,11 @@ type ExprStmt struct {
 }
 
 func (n VarDecl) tree() *treeNode {
-	return branch(":= "+strings.Join(n.Idents, ", "), nodesToChildren(n.Exprs)...)
+	prefix := ""
+	if n.Const {
+		prefix = "const"
+	}
+	return branch(prefix+" := "+strings.Join(n.Idents, ", "), nodesToChildren(n.Exprs)...)
 }
 func (n Return) tree() *treeNode   { return branch("return", nodesToChildren(n.Exprs)...) }
 func (n Raise) tree() *treeNode    { return branch("raise", nodeTree(n.Expr)) }
@@ -623,9 +671,10 @@ type FunctionDecl struct {
 	base
 	Name        string
 	Args        []DeclArg
+	TypeArgs    []Node
 	Body        []Node
 	Recv        *Receiver
-	Returns     Node
+	Returns     []Node
 	Annotations []Annotation
 }
 
@@ -633,7 +682,7 @@ type FnSig struct {
 	base
 	Name    string
 	Args    []DeclArg
-	Returns Node
+	Returns []Node
 }
 
 type StructField struct {
@@ -653,7 +702,7 @@ type Struct struct {
 	base
 	Name       string
 	Generics   []Node
-	Interfaces []string
+	Interfaces []Node
 	Exported   []Node
 	Unexported []Node
 	Inits      []Init
@@ -724,6 +773,13 @@ func (n FunctionDecl) tree() *treeNode {
 		label = fmt.Sprintf("fn [%s %s] %s", n.Recv.Name, n.Recv.Type.String(), n.Name)
 	}
 	var children []*treeNode
+	if len(n.TypeArgs) > 0 {
+		typeArgsBranch := branch("generics")
+		for _, arg := range n.TypeArgs {
+			typeArgsBranch.children = append(typeArgsBranch.children, nodeTree(arg))
+		}
+		children = append(children, typeArgsBranch)
+	}
 	for _, a := range n.Annotations {
 		children = append(children, a.tree())
 	}
@@ -755,7 +811,7 @@ func (n Struct) tree() *treeNode {
 	label := genericLabel("struct "+n.Name, n.Generics)
 	var children []*treeNode
 	if len(n.Interfaces) > 0 {
-		children = append(children, leaf("is: "+strings.Join(n.Interfaces, ", ")))
+		children = append(children, leaf("is: "+join(n.Interfaces)))
 	}
 	if len(n.Unexported) > 0 {
 		children = append(children, branch("unexported", nodesToChildren(n.Unexported)...))

@@ -2,11 +2,13 @@ module main
 
 interface Animal {
     fn EmitSound()
-    const int paws
+    const int paws = -1
 }
 
 struct Dog is Animal {
-    @paws = 4
+    init() {
+        @paws = 4
+    }
 }
 
 fn [d Dog] EmitSound() {
@@ -14,7 +16,9 @@ fn [d Dog] EmitSound() {
 }
 
 struct Chicken is Animal {
-    @paws = 2
+    init() {
+        @paws = 2
+    }
 }
 
 fn [c Chicken] EmitSound() {

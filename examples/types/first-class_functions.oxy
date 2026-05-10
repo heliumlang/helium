@@ -1,6 +1,6 @@
 module main
 
-fn apply(nums int[], f fn(int) int) int[] {
+fn apply(int[] nums, fn(int) int f) int[] {
     result := []int
     for _, n in nums {
         result.append(f(n))

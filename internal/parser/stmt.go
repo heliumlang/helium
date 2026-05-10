@@ -9,19 +9,29 @@ import (
 func (p *Parser) parseStatement() Node {
 	ti := p.enterRule("parse statement")
 	defer p.traceRm(ti)
-	for p.match(lexer.Newline) {
+	for p.match(lexer.NewLine) {
 		p.advance()
 	}
 	t := p.get(0)
 	switch t.Kind() {
-	case lexer.Ident, lexer.OpIncrement, lexer.OpDecrement, lexer.OpAt:
+	case lexer.Ident, lexer.KeywordConst, lexer.OpIncrement, lexer.OpDecrement, lexer.OpAt:
 		if p.isDeclAssign() {
 			return p.parseVarDecl()
 		}
 		return p.parseExprStmt()
 	case lexer.KeywordReturn:
 		p.advance()
-		exprs := list(p, lexer.PunctComma, lexer.Newline, p.parseExpr)
+		var exprs []Node
+		for !p.match(lexer.NewLine) && !p.match(lexer.PunctRBrace) && !p.isEOF() {
+			exprs = append(exprs, p.parseExpr())
+			if !p.match(lexer.PunctComma) {
+				break
+			}
+			p.advance()
+		}
+		if p.match(lexer.NewLine) {
+			p.advance()
+		}
 		return Return{Exprs: exprs}
 	case lexer.KeywordIf:
 		return p.parseIfStmt()
@@ -52,7 +62,7 @@ func (p *Parser) isDeclAssign() bool {
 			return false
 		}
 		switch tok.Kind() {
-		case lexer.Ident:
+		case lexer.Ident, lexer.KeywordConst:
 			i++
 		case lexer.PunctComma:
 			i++
@@ -64,21 +74,11 @@ func (p *Parser) isDeclAssign() bool {
 	}
 }
 
-func (p *Parser) parseVarDecl() Node {
-	ti := p.enterRule("parse variable declaration")
-	defer p.traceRm(ti)
-	idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
-		return p.mustRead(lexer.Ident)
-	})
-	exprs := list(p, lexer.PunctComma, lexer.Newline, p.parseExpr)
-	return VarDecl{Idents: idents, Exprs: exprs}
-}
-
 func (p *Parser) parseExprStmt() Node {
 	ti := p.enterRule("parse expression statement")
 	defer p.traceRm(ti)
 	expr := p.parseExpr()
-	if p.match(lexer.Newline) {
+	if p.match(lexer.NewLine) {
 		p.advance()
 	}
 	return ExprStmt{Expr: expr}
@@ -93,7 +93,7 @@ func (p *Parser) parseIfStmt() Node {
 	var elifs []Elif
 	var els *[]Node
 	for {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if !p.match(lexer.KeywordElse) {
@@ -120,7 +120,7 @@ func (p *Parser) parseBlock() []Node {
 	p.mustSkip(lexer.PunctLBrace)
 	var body []Node
 	for {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) || p.isEOF() {
@@ -165,7 +165,7 @@ func (p *Parser) parseSwitchStmt() Node {
 		def   *SwitchResult
 	)
 	for {
-		for p.match(lexer.Newline) {
+		for p.match(lexer.NewLine) {
 			p.advance()
 		}
 		if p.match(lexer.PunctRBrace) || p.isEOF() {
@@ -218,7 +218,7 @@ func (p *Parser) parseSwitchResult() SwitchResult {
 		return SwitchResult{Block: p.parseBlock()}
 	}
 	expr := p.parseExpr()
-	if p.match(lexer.Newline) {
+	if p.match(lexer.NewLine) {
 		p.advance()
 	}
 	return SwitchResult{Expr: &expr}

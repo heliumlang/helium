@@ -10,7 +10,7 @@ struct UserStorage {
 }
 
 fn [us UserStorage] addUser(string name) {
-    user := new User(name: name, id: us.lastID++)
+    user := new User(name: name, id: ++us.lastID)
     us.users.insert(user)
 }
 
@@ -19,7 +19,7 @@ fn [us UserStorage] findUser(long id) User? {
     return exists ? user : none
 }
 
-const anonymous = new User(name: "Anonymous")
+const anonymous := new User(name: "Anonymous")
 
 fn main() {
     storage := new UserStorage()

@@ -52,11 +52,23 @@ func (p *Parser) oneOf(kinds ...lexer.TokenKind) bool {
 func list[T any](p *Parser, sep, end lexer.TokenKind, fn func() T) []T {
 	var items []T
 	for !p.match(end) {
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
+		if p.match(end) {
+			break
+		}
 		items = append(items, fn())
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
 		if !p.match(sep) {
 			break
 		}
 		p.advance()
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
 	}
 	p.mustSkip(end)
 	return items
