@@ -4,7 +4,7 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/Nykenik24/oxy/internal/parser"
+	"github.com/Nykenik24/oxy/internal/frontend/parser"
 )
 
 type VisitFunc func(node parser.Node) error

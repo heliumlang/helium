@@ -1,4 +1,4 @@
-package oxy_error
+package oxyerr
 
 import (
 	"fmt"

@@ -4,15 +4,15 @@ import (
 	"os"
 	"time"
 
-	oxy_error "github.com/Nykenik24/oxy/internal/error"
-	"github.com/Nykenik24/oxy/internal/lexer"
+	"github.com/Nykenik24/oxy/internal/frontend/lexer"
+	"github.com/Nykenik24/oxy/internal/oxyerr"
 )
 
 type Parser struct {
 	tokens   []*lexer.Token
 	index    int
 	filename string
-	trace    []*oxy_error.Trace
+	trace    []*oxyerr.Trace
 }
 
 func New(file string, tokens []*lexer.Token) *Parser {
@@ -42,7 +42,7 @@ func (p *Parser) advance() *lexer.Token {
 }
 
 func (p *Parser) enterRule(name string) int {
-	entry := &oxy_error.Trace{
+	entry := &oxyerr.Trace{
 		Name:    name,
 		Entered: time.Now(),
 		File:    "<oxy>",
@@ -59,7 +59,7 @@ func (p *Parser) traceRm(i int) {
 }
 
 func (p *Parser) error(msg string, pos lexer.Position) {
-	err := oxy_error.New(msg, p.trace)
+	err := oxyerr.New(msg, p.trace)
 	err.SetPos(pos.Line, pos.Col).SetFilename(p.filename).SetType("parse").Print()
 
 	panic(parseError{})

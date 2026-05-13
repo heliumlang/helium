@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Nykenik24/oxy/internal/lexer"
+	"github.com/Nykenik24/oxy/internal/frontend/lexer"
 )
 
 func (p *Parser) inbounds(n int) bool {

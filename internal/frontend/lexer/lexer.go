@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	oxy_error "github.com/Nykenik24/oxy/internal/error"
+	"github.com/Nykenik24/oxy/internal/oxyerr"
 )
 
 type Lexer interface {
-	Lex(input string) ([]*Token, *oxy_error.Error)
+	Lex(input string) ([]*Token, *oxyerr.Error)
 	SetFilename(fname string)
 }
 
@@ -116,7 +116,7 @@ func (l *lexer) lexChar() (*Token, error) {
 	return NewToken(lexeme, Char), nil
 }
 
-func (l *lexer) Lex(input string) ([]*Token, *oxy_error.Error) {
+func (l *lexer) Lex(input string) ([]*Token, *oxyerr.Error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
@@ -187,7 +187,7 @@ func (l *lexer) Lex(input string) ([]*Token, *oxy_error.Error) {
 		col += l.i - starti
 
 		if err != nil {
-			return nil, oxy_error.New(err.Error(), oxy_error.EmptyTrace()).SetType("lex")
+			return nil, oxyerr.New(err.Error(), oxyerr.EmptyTrace()).SetType("lex")
 		}
 
 		token.line = line
