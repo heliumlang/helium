@@ -15,7 +15,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	file := os.Args[1]
+
 	run.Benchmark(func() {
-		run.RunFile(os.Args[1])
+		if err := run.RunFile(file); err != nil {
+			err.SetFilename(file).Print()
+		}
 	})
 }

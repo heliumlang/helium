@@ -35,6 +35,8 @@ var reserved = []word{
 	w("enum", KeywordEnum),
 	w("variant", KeywordVariant),
 	w("alias", KeywordAlias),
+	w("use", KeywordUse),
+	w("from", KeywordFrom),
 }
 
 func w(str string, kind TokenKind) word {

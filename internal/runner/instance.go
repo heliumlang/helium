@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	oxy_error "github.com/Nykenik24/oxy/internal/error"
 	"github.com/Nykenik24/oxy/internal/lexer"
 	"github.com/Nykenik24/oxy/internal/parser"
 )
@@ -40,7 +41,9 @@ func (i *Instance) Benchmark(fn func()) {
 	fn()
 }
 
-func (i *Instance) run(raw string, filename string) error {
+func (i *Instance) run(raw string, filename string) *oxy_error.Error {
+	i.lexer.SetFilename(filename)
+
 	tokens, err := i.lexer.Lex(raw)
 	i.res.Tokens = tokens
 
@@ -63,14 +66,15 @@ func (i *Instance) run(raw string, filename string) error {
 	return nil
 }
 
-func (i *Instance) RunString(input string) error {
+func (i *Instance) RunString(input string) *oxy_error.Error {
+	i.lexer.SetFilename("<raw string>")
 	return i.run(input, "<raw string>")
 }
 
-func (i *Instance) RunFile(filename string) error {
+func (i *Instance) RunFile(filename string) *oxy_error.Error {
 	content, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		return oxy_error.New(err.Error(), oxy_error.EmptyTrace())
 	}
 
 	return i.run(string(content), filename)

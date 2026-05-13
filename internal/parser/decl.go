@@ -15,6 +15,48 @@ func (p *Parser) parseModule() Node {
 	return &Module{Name: name}
 }
 
+func (p *Parser) parseUse() Node {
+	p.mustSkip(lexer.KeywordUse)
+
+	var (
+		from     string = ""
+		wildcard        = false
+		members  []string
+	)
+
+	if p.match(lexer.OpMul) {
+		wildcard = true
+		p.advance()
+	} else {
+		members = append(members, p.mustRead(lexer.Ident))
+		for p.match(lexer.PunctComma) {
+			if p.match(lexer.Ident) {
+				members = append(members, p.get(0).Lexeme())
+				p.advance()
+			} else {
+				break
+			}
+		}
+	}
+
+	if p.match(lexer.KeywordFrom) {
+		p.advance()
+		from = p.mustRead(lexer.Ident)
+	}
+
+	return &Use{
+		From: (func() *string {
+			if from == "" {
+				return nil
+			} else {
+				return &from
+			}
+		})(),
+		Members:  members,
+		Wildcard: wildcard,
+	}
+}
+
 func (p *Parser) parseDecl() Node {
 	ti := p.enterRule("parse declaration")
 	defer p.traceRm(ti)

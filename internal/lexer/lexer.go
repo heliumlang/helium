@@ -3,21 +3,29 @@ package lexer
 import (
 	"errors"
 	"fmt"
+
+	oxy_error "github.com/Nykenik24/oxy/internal/error"
 )
 
 type Lexer interface {
-	Lex(input string) ([]*Token, error)
+	Lex(input string) ([]*Token, *oxy_error.Error)
+	SetFilename(fname string)
 }
 
 type lexer struct {
-	tokens []*Token
-	input  string
-	n      int
-	i      int
+	tokens   []*Token
+	input    string
+	n        int
+	i        int
+	filename string
 }
 
 func New() Lexer {
 	return &lexer{}
+}
+
+func (l *lexer) SetFilename(fname string) {
+	l.filename = fname
 }
 
 func (l *lexer) inbounds() bool {
@@ -74,7 +82,7 @@ func (l *lexer) lexString() (*Token, error) {
 	if l.curr() == '"' {
 		l.i++
 	}
-	for l.inbounds() && l.curr() != '"' {
+	for l.inbounds() && l.curr() != '"' && l.curr() != '\n' {
 		lexeme = append(lexeme, l.curr())
 		l.i++
 	}
@@ -108,7 +116,7 @@ func (l *lexer) lexChar() (*Token, error) {
 	return NewToken(lexeme, Char), nil
 }
 
-func (l *lexer) Lex(input string) ([]*Token, error) {
+func (l *lexer) Lex(input string) ([]*Token, *oxy_error.Error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
@@ -179,7 +187,7 @@ func (l *lexer) Lex(input string) ([]*Token, error) {
 		col += l.i - starti
 
 		if err != nil {
-			return nil, err
+			return nil, oxy_error.New(err.Error(), oxy_error.EmptyTrace()).SetType("lex")
 		}
 
 		token.line = line

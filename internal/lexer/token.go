@@ -56,6 +56,8 @@ const (
 	PunctPipe
 	KeywordFn
 	KeywordModule
+	KeywordUse
+	KeywordFrom
 	KeywordStruct
 	KeywordRecord
 	KeywordInterface

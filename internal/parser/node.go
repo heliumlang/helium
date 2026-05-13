@@ -80,6 +80,16 @@ func join[T fmt.Stringer](s []T) string {
 	return b.String()
 }
 
+func arrToNodes[T any](s []T, fn func(T) *treeNode) []*treeNode {
+	var nodes []*treeNode
+
+	for _, v := range s {
+		nodes = append(nodes, fn(v))
+	}
+
+	return nodes
+}
+
 func nodesToChildren(nodes []Node) []*treeNode {
 	out := make([]*treeNode, len(nodes))
 	for i, n := range nodes {
@@ -148,9 +158,34 @@ type Module struct {
 	base
 	Name string
 }
+type Use struct {
+	base
+	Members  []string
+	From     *string
+	Wildcard bool
+}
 
+func (n Use) tree() *treeNode {
+	var children []*treeNode
+
+	if !n.Wildcard {
+		children = append(children, branch("members", arrToNodes(n.Members, func(s string) *treeNode {
+			return leaf(s)
+		})...))
+	} else {
+		children = append(children, leaf("all members"))
+	}
+
+	if n.From != nil {
+		children = append(children, leaf("from:"+*n.From))
+	}
+
+	return branch("Use", children...)
+}
 func (n Module) tree() *treeNode { return leaf(fmt.Sprintf("Module(%q)", n.Name)) }
-func (n Module) String() string  { return n.tree().String() }
+
+func (n Module) String() string { return n.tree().String() }
+func (n Use) String() string    { return n.tree().String() }
 
 type BaseType struct {
 	base
@@ -244,11 +279,11 @@ type BoolLit struct {
 }
 type NoneLit struct{ base }
 
-func (n IntLit) tree() *treeNode    { return leaf(fmt.Sprintf("%d", n.Value)) }
-func (n FloatLit) tree() *treeNode  { return leaf(fmt.Sprintf("%g", n.Value)) }
-func (n StringLit) tree() *treeNode { return leaf(fmt.Sprintf("%q", n.Value)) }
-func (n CharLit) tree() *treeNode   { return leaf(fmt.Sprintf("%q", n.Value)) }
-func (n BoolLit) tree() *treeNode   { return leaf(fmt.Sprintf("%t", n.Value)) }
+func (n IntLit) tree() *treeNode    { return leaf(fmt.Sprintf("int: %d", n.Value)) }
+func (n FloatLit) tree() *treeNode  { return leaf(fmt.Sprintf("float: %g", n.Value)) }
+func (n StringLit) tree() *treeNode { return leaf(fmt.Sprintf("str: %q", n.Value)) }
+func (n CharLit) tree() *treeNode   { return leaf(fmt.Sprintf("char: '%c'", n.Value)) }
+func (n BoolLit) tree() *treeNode   { return leaf(fmt.Sprintf("bool: %t", n.Value)) }
 func (n NoneLit) tree() *treeNode   { return leaf("none") }
 
 func (n IntLit) String() string    { return n.tree().String() }
