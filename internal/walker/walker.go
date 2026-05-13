@@ -1,6 +1,7 @@
 package walker
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/Nykenik24/oxy/internal/parser"
@@ -20,22 +21,49 @@ func New(root parser.Node) *Walker {
 	}
 }
 
-func (w *Walker) On(nodeType string, fn VisitFunc) *Walker {
-	w.visitors[nodeType] = fn
+func (w *Walker) Before(nodeType string, fn VisitFunc) *Walker {
+	w.visitors["before:"+nodeType] = fn
 	return w
 }
+
+func (w *Walker) After(nodeType string, fn VisitFunc) *Walker {
+	w.visitors["after:"+nodeType] = fn
+	return w
+}
+
+func (w *Walker) On(nodeType string, fn VisitFunc) *Walker {
+	w.Before(nodeType, fn)
+	return w
+}
+
+var SkipChildren = errors.New("skip children")
 
 func (w *Walker) dispatch(node parser.Node) error {
 	if node == nil {
 		return nil
 	}
 	key := nodeTypeName(node)
-	if fn, ok := w.visitors[key]; ok {
+
+	if fn, ok := w.visitors["before:"+key]; ok {
+		if err := fn(node); err != nil {
+			if err == SkipChildren {
+				return nil
+			}
+			return err
+		}
+	}
+
+	if err := w.walkChildren(node); err != nil {
+		return err
+	}
+
+	if fn, ok := w.visitors["after:"+key]; ok {
 		if err := fn(node); err != nil {
 			return err
 		}
 	}
-	return w.walkChildren(node)
+
+	return nil
 }
 
 func (w *Walker) Walk() error {
@@ -44,7 +72,7 @@ func (w *Walker) Walk() error {
 
 func nodeTypeName(n parser.Node) string {
 	t := reflect.TypeOf(n)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		return t.Elem().Name()
 	}
 	return t.Name()
