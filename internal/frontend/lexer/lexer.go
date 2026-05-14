@@ -54,6 +54,29 @@ func (l *lexer) lexIdent() (*Token, error) {
 	return NewToken(lexeme, kind), nil
 }
 
+func (l *lexer) lexShortcut() (*Token, error) {
+	var lexeme []byte
+	kind := Ident
+
+	if l.input[l.i] != '$' {
+		return nil, fmt.Errorf("shortcut doesn't start with $")
+	}
+	l.i++
+
+	lexeme = append(lexeme, l.input[l.i])
+	l.i++
+
+	for l.inbounds() && (isAlpha(l.curr()) || isDigit(l.curr()) || l.curr() == '_') {
+		lexeme = append(lexeme, l.curr())
+		l.i++
+	}
+
+	if ok, k := isKeyword(lexeme); ok {
+		kind = k
+	}
+	return NewToken(lexeme, kind), nil
+}
+
 func (l *lexer) lexDigit() (*Token, error) {
 	var (
 		lexeme []byte
@@ -154,6 +177,8 @@ func (l *lexer) Lex(input string) ([]*Token, *oxyerr.Error) {
 			}
 		} else if isAlpha(char) || char == '_' {
 			token, err = l.lexIdent()
+		} else if char == '$' {
+			token, err = l.lexShortcut()
 		} else if isDigit(char) {
 			token, err = l.lexDigit()
 		} else if char == '"' {

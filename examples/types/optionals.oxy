@@ -1,7 +1,7 @@
 module main
 
 record User {
-    string name
+    pub string name
 }
 
 struct UserStorage {

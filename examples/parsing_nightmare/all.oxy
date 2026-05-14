@@ -1,10 +1,24 @@
 module main
 
+# ─── Use ─────────────────────────────────────────────────────────────────────
+
+use add, sub from $std/math
+use * from $std/math
+
+# ─── Extern ──────────────────────────────────────────────────────────────────
+
+extern some_c_function
+
+extern {
+    other_c_function,
+    yet_another_c_function,
+}
+
 # ─── Alias ───────────────────────────────────────────────────────────────────
 
-alias ID = long
 alias MaybeUser = User?
 alias Predicate = fn(int) bool
+alias ID = long
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -19,7 +33,7 @@ enum Direction {
 enum Shape {
     Circle(float radius)
     Rect(float width, float height)
-    Point
+    Point(float x, float y)
 }
 
 # ─── Variants ────────────────────────────────────────────────────────────────
@@ -63,8 +77,7 @@ struct Stack<T> {
     T[]  items
     int  count
 
-    export:
-    int capacity
+    export int capacity
 
     init(int capacity) {
         @capacity = capacity
@@ -83,8 +96,7 @@ struct Stack<T> {
 struct OldStack {
     int[] data
 
-    export:
-    int size
+    export int size
 
     init(int size) {
         @size = size
@@ -96,8 +108,7 @@ struct UserStorage is Container<User>, Stringer {
     map<ID, User> users
     ID            lastID
 
-    export:
-    string label
+    export string label
 
     init() {
         @users  = {}
@@ -137,7 +148,8 @@ fn safeDivide(float a, float b) float? {
 
 # Failable return
 fn mustDivide(float a, float b) float! {
-    return b == 0.0 ? none : a / b
+    if b == 0. { raise "can't divide by 0" }
+    return a / b
 }
 
 # Generic function
@@ -185,20 +197,20 @@ fn sum(int[] nums) int {
 
 # ─── Method functions ─────────────────────────────────────────────────────────
 
-fn [s Stack<int>] push(int value) {
-    @items.append(value)
-    @count = @count + 1
+export fn [s Stack<int>] push(int value) {
+    s.items.append(value)
+    s.count = s.count + 1
 }
 
-fn [s Stack<int>] pop() int? {
-    return @count == 0 ? none : @items[@count - 1]
+export fn [s Stack<int>] pop() int? {
+    return s.count == 0 ? none : s.items[s.count - 1]
 }
 
-fn [s Stack<int>] peek() int? {
-    return @count > 0 ? @items[@count - 1] : none
+export fn [s Stack<int>] peek() int? {
+    return s.count > 0 ? s.items[s.count - 1] : none
 }
 
-fn [us UserStorage] addUser(string name) {
+export fn [us UserStorage] addUser(string name) {
     user := new User(
         id:   ++us.lastID,
         name: name,
@@ -207,12 +219,12 @@ fn [us UserStorage] addUser(string name) {
     us.users.insert(user.id, user)
 }
 
-fn [us UserStorage] findUser(ID id) User? {
+export fn [us UserStorage] findUser(ID id) User? {
     u, exists := us.users[id]
     return exists ? u : none
 }
 
-fn [us UserStorage] removeUser(ID id) bool {
+export fn [us UserStorage] removeUser(ID id) bool {
     _, exists := us.users[id]
     if exists {
         us.users.delete(id)
@@ -220,13 +232,13 @@ fn [us UserStorage] removeUser(ID id) bool {
     return exists
 }
 
-fn [us UserStorage] toString() string {
+export fn [us UserStorage] toString() string {
     return "UserStorage(" + us.label + ")"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
-fn main() {
+export fn main() {
     # ── Var decls ──────────────────────────────────────────────────────────
 
     x := 42

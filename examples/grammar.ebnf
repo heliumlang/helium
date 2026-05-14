@@ -20,13 +20,14 @@ return_type     = type , { "," , type } ;
 
 struct_decl     = "struct" , IDENT , [ type_params ] , [ "is" , interface_list ] ,
                   "{" , struct_body , "}" ;
-struct_body     = { field_decl } , [ "export:" , { field_decl } ]
+struct_body     = { field_decl }
                   , { init_decl } ;
 
 record_decl     = "record" , IDENT , [ type_params ] ,
                   "{" , record_body , "}" ;
 record_body     = { field_decl } ;
-field_decl      = type , IDENT ;
+field_decl      = [ { field_qualif } ], type , IDENT ;
+field_qualif    = ( "pub" | "const" ) ;
 init_decl       = "init" , "(" , [ param_list ] , ")" , block ;
 
 interface_decl  = "interface" , IDENT , [ type_params ] ,

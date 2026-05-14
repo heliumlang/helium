@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/Nykenik24/oxy/internal/frontend/lexer"
 )
@@ -47,6 +48,20 @@ func (p *Parser) mustRead(kind lexer.TokenKind) string {
 
 func (p *Parser) oneOf(kinds ...lexer.TokenKind) bool {
 	return slices.Contains(kinds, p.get(0).Kind())
+}
+
+func (p *Parser) mustOneOf(kinds ...lexer.TokenKind) *lexer.Token {
+	if p.oneOf(kinds...) {
+		t := p.get(0)
+		p.advance()
+		return t
+	}
+	var parts []string
+	for _, k := range kinds {
+		parts = append(parts, k.String())
+	}
+	p.error(fmt.Sprintf("expected one of %s", strings.Join(parts, ", ")), p.get(0).Pos())
+	return nil
 }
 
 func list[T any](p *Parser, sep, end lexer.TokenKind, fn func() T) []T {

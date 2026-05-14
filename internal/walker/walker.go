@@ -256,10 +256,7 @@ func (w *Walker) walkChildren(node parser.Node) error {
 		if err := w.walkNodes(n.Interfaces); err != nil {
 			return err
 		}
-		if err := w.walkNodes(n.Exported); err != nil {
-			return err
-		}
-		if err := w.walkNodes(n.Unexported); err != nil {
+		if err := w.walkNodes(parser.MapToNodes(n.Fields)); err != nil {
 			return err
 		}
 		for _, init := range n.Inits {

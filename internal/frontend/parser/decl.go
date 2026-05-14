@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/Nykenik24/oxy/internal/frontend/lexer"
 )
@@ -16,11 +17,13 @@ func (p *Parser) parseModule() Node {
 }
 
 func (p *Parser) parseUse() Node {
+	ti := p.enterRule("parse use")
+	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordUse)
 
 	var (
-		from     string = ""
-		wildcard        = false
+		from     *From = nil
+		wildcard       = false
 		members  []string
 	)
 
@@ -30,6 +33,7 @@ func (p *Parser) parseUse() Node {
 	} else {
 		members = append(members, p.mustRead(lexer.Ident))
 		for p.match(lexer.PunctComma) {
+			p.advance()
 			if p.match(lexer.Ident) {
 				members = append(members, p.get(0).Lexeme())
 				p.advance()
@@ -41,19 +45,34 @@ func (p *Parser) parseUse() Node {
 
 	if p.match(lexer.KeywordFrom) {
 		p.advance()
-		from = p.mustRead(lexer.Ident)
+		var path []*lexer.Token
+		path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut))
+		for p.match(lexer.OpDiv) {
+			p.advance()
+			path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut))
+		}
+		from = &From{Path: path}
 	}
 
 	return &Use{
-		From: (func() *string {
-			if from == "" {
-				return nil
-			} else {
-				return &from
-			}
-		})(),
+		From:     from,
 		Members:  members,
 		Wildcard: wildcard,
+	}
+}
+
+func (p *Parser) parseExtern() Node {
+	ti := p.enterRule("parse extern")
+	defer p.traceRm(ti)
+	p.mustSkip(lexer.KeywordExtern)
+	if p.match(lexer.PunctLBrace) {
+		p.advance()
+		members := list(p, lexer.PunctComma, lexer.PunctRBrace, func() string {
+			return p.mustRead(lexer.Ident)
+		})
+		return Extern{Members: members}
+	} else {
+		return Extern{Members: []string{p.mustRead(lexer.Ident)}}
 	}
 }
 
@@ -69,9 +88,13 @@ func (p *Parser) parseDecl() Node {
 	}
 	t := p.get(0)
 	switch t.Kind() {
+	case lexer.KeywordUse:
+		return p.parseUse()
+	case lexer.KeywordExtern:
+		return p.parseExtern()
 	case lexer.Ident:
 		return p.parseVarDecl()
-	case lexer.KeywordFn:
+	case lexer.KeywordFn, lexer.KeywordExport:
 		return p.parseFuncWithAnnotations(annotations)
 	case lexer.KeywordStruct:
 		return p.parseStruct()
@@ -138,6 +161,11 @@ func (p *Parser) parseVarDecl() Node {
 func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
 	ti := p.enterRule("parse function declaration")
 	defer p.traceRm(ti)
+	public := false
+	if p.match(lexer.KeywordExport) {
+		p.advance()
+		public = true
+	}
 	p.mustSkip(lexer.KeywordFn)
 	var (
 		recv    *Receiver = nil
@@ -163,6 +191,7 @@ func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
 	}
 	body := p.parseBlock()
 	return &FunctionDecl{
+		Public:      public,
 		Name:        name,
 		Args:        args,
 		TypeArgs:    typeArgs,
@@ -364,26 +393,23 @@ func (p *Parser) parseStruct() Node {
 		interfaces = list(p, lexer.PunctComma, lexer.PunctLBrace, p.parseType)
 		p.index--
 	}
-	unexported, exported, inits := p.parseStructBody()
+	fields, inits := p.parseStructBody()
 	return Struct{
 		Name:       name,
 		Generics:   generics,
 		Interfaces: interfaces,
-		Exported:   exported,
-		Unexported: unexported,
+		Fields:     fields,
 		Inits:      inits,
 	}
 }
 
-func (p *Parser) parseStructBody() ([]Node, []Node, []Init) {
+func (p *Parser) parseStructBody() ([]StructField, []Init) {
 	ti := p.enterRule("parse struct body")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.PunctLBrace)
 	var (
-		unexported    []Node
-		exported      []Node
-		inits         []Init
-		reachedExport = false
+		fields []StructField
+		inits  []Init
 	)
 	for !p.match(lexer.PunctRBrace) {
 		for p.match(lexer.NewLine) {
@@ -396,23 +422,11 @@ func (p *Parser) parseStructBody() ([]Node, []Node, []Init) {
 			inits = append(inits, p.parseInit())
 			continue
 		}
-		if p.match(lexer.KeywordExport) {
-			p.advance()
-			p.mustSkip(lexer.PunctColon)
-			p.mustSkip(lexer.NewLine)
-			reachedExport = true
-			continue
-		}
-		field := p.parseStructField()
-		if reachedExport {
-			exported = append(exported, field)
-		} else {
-			unexported = append(unexported, field)
-		}
+		fields = append(fields, p.parseStructField())
 		p.mustSkip(lexer.NewLine)
 	}
 	p.mustSkip(lexer.PunctRBrace)
-	return unexported, exported, inits
+	return fields, inits
 }
 
 func (p *Parser) parseInit() Init {
@@ -424,12 +438,20 @@ func (p *Parser) parseInit() Init {
 	body := p.parseBlock()
 	return Init{Params: params, Body: body}
 }
-func (p *Parser) parseStructField() Node {
+
+func (p *Parser) parseStructField() StructField {
 	ti := p.enterRule("parse struct field")
 	defer p.traceRm(ti)
 	var qualifiers []string
-	for p.oneOf(lexer.KeywordConst) {
-		qualifiers = append(qualifiers, p.get(0).Lexeme())
+	for p.oneOf(
+		lexer.KeywordConst,
+		lexer.KeywordExport,
+	) {
+		qualif := p.get(0).Lexeme()
+		if slices.Contains(qualifiers, qualif) {
+			p.error("can't have more than one of the same qualifier in field", p.get(0).Pos())
+		}
+		qualifiers = append(qualifiers, qualif)
 		p.advance()
 	}
 	_type := p.parseType()

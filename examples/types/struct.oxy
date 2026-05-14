@@ -1,9 +1,8 @@
 module main
 
 struct Point {
-export:
-    int x
-    int y
+    pub int x
+    pub int y
 }
 
 fn [a Point] add(Point b) Point {
@@ -11,10 +10,9 @@ fn [a Point] add(Point b) Point {
 }
 
 struct Person {
-export:
-    string name
-    string surname
-    string fullname
+    pub string name
+    pub string surname
+    pub string fullname
 
     init(string name, string surname) {
         @name = name

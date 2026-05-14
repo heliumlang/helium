@@ -69,12 +69,12 @@ func (t *treeNode) write(b *strings.Builder, prefix, connector string) {
 	}
 }
 
-func join[T fmt.Stringer](s []T) string {
+func join[T fmt.Stringer](s []T, sep string) string {
 	var b strings.Builder
 	for i, v := range s {
 		b.WriteString(v.String())
 		if i < len(s)-1 {
-			b.WriteString(", ")
+			b.WriteString(sep)
 		}
 	}
 	return b.String()
@@ -90,12 +90,21 @@ func arrToNodes[T any](s []T, fn func(T) *treeNode) []*treeNode {
 	return nodes
 }
 
-func nodesToChildren(nodes []Node) []*treeNode {
+func nodesToChildren[N Node](s []N) []*treeNode {
+	nodes := MapToNodes(s)
 	out := make([]*treeNode, len(nodes))
 	for i, n := range nodes {
 		out[i] = nodeTree(n)
 	}
 	return out
+}
+
+func MapToNodes[N Node](s []N) []Node {
+	var nodes []Node
+	for _, n := range s {
+		nodes = append(nodes, Node(n))
+	}
+	return nodes
 }
 
 func argListChildren(args []Arg) []*treeNode {
@@ -143,7 +152,7 @@ func returnsChild(returns []Node) *treeNode {
 	if len(returns) == 0 || returns == nil {
 		return leaf("returns: void")
 	}
-	return leaf("returns: " + join(returns))
+	return leaf("returns: " + join(returns, ", "))
 }
 
 type Program struct {
@@ -158,13 +167,28 @@ type Module struct {
 	base
 	Name string
 }
+type From struct {
+	base
+	Path []*lexer.Token
+}
 type Use struct {
 	base
 	Members  []string
-	From     *string
+	From     *From
 	Wildcard bool
 }
+type Extern struct {
+	base
+	Members []string
+}
 
+func (n From) tree() *treeNode {
+	var lexemes []string
+	for _, tk := range n.Path {
+		lexemes = append(lexemes, tk.Lexeme())
+	}
+	return leaf("from: " + strings.Join(lexemes, "/"))
+}
 func (n Use) tree() *treeNode {
 	var children []*treeNode
 
@@ -177,14 +201,21 @@ func (n Use) tree() *treeNode {
 	}
 
 	if n.From != nil {
-		children = append(children, leaf("from:"+*n.From))
+		children = append(children, n.From.tree())
 	}
 
 	return branch("Use", children...)
 }
+func (n Extern) tree() *treeNode {
+	return branch("extern", arrToNodes(n.Members, func(v string) *treeNode {
+		return leaf(v)
+	})...)
+}
 func (n Module) tree() *treeNode { return leaf(fmt.Sprintf("Module(%q)", n.Name)) }
 
+func (n From) String() string   { return n.tree().String() }
 func (n Module) String() string { return n.tree().String() }
+func (n Extern) String() string { return n.tree().String() }
 func (n Use) String() string    { return n.tree().String() }
 
 type BaseType struct {
@@ -244,7 +275,7 @@ func (n FunctionType) String() string {
 	}
 	ret := "void"
 	if n.Returns != nil {
-		ret = join(n.Returns)
+		ret = join(n.Returns, ", ")
 	}
 	return fmt.Sprintf("fn(%s) %s", strings.Join(args, ", "), ret)
 }
@@ -518,7 +549,7 @@ type ClosureExpr struct {
 func (n ClosureExpr) tree() *treeNode {
 	ret := "void"
 	if len(n.Returns) > 0 {
-		ret = join(n.Returns)
+		ret = join(n.Returns, ", ")
 	}
 	return branch("fn",
 		paramsChild(n.Params),
@@ -704,6 +735,7 @@ type Receiver struct {
 
 type FunctionDecl struct {
 	base
+	Public      bool
 	Name        string
 	Args        []DeclArg
 	TypeArgs    []Node
@@ -738,8 +770,7 @@ type Struct struct {
 	Name       string
 	Generics   []Node
 	Interfaces []Node
-	Exported   []Node
-	Unexported []Node
+	Fields     []StructField
 	Inits      []Init
 }
 
@@ -804,8 +835,11 @@ func (n Annotation) String() string { return n.tree().String() }
 
 func (n FunctionDecl) tree() *treeNode {
 	label := "fn " + n.Name
+	if n.Public {
+		label = "export " + label
+	}
 	if n.Recv != nil {
-		label = fmt.Sprintf("fn [%s %s] %s", n.Recv.Name, n.Recv.Type.String(), n.Name)
+		label = fmt.Sprintf("%s [%s %s] %s", label, n.Recv.Name, n.Recv.Type.String(), n.Name)
 	}
 	var children []*treeNode
 	if len(n.TypeArgs) > 0 {
@@ -846,13 +880,10 @@ func (n Struct) tree() *treeNode {
 	label := genericLabel("struct "+n.Name, n.Generics)
 	var children []*treeNode
 	if len(n.Interfaces) > 0 {
-		children = append(children, leaf("is: "+join(n.Interfaces)))
+		children = append(children, leaf("is: "+join(n.Interfaces, ", ")))
 	}
-	if len(n.Unexported) > 0 {
-		children = append(children, branch("unexported", nodesToChildren(n.Unexported)...))
-	}
-	if len(n.Exported) > 0 {
-		children = append(children, branch("exported", nodesToChildren(n.Exported)...))
+	if len(n.Fields) > 0 {
+		children = append(children, branch("fields", nodesToChildren(n.Fields)...))
 	}
 	for _, init := range n.Inits {
 		children = append(children, init.tree())

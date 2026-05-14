@@ -17,6 +17,7 @@ const (
 	Float
 	String
 	Char
+	Shortcut
 	OpAdd
 	OpSub
 	OpMul
@@ -62,7 +63,6 @@ const (
 	KeywordRecord
 	KeywordInterface
 	KeywordIs
-	KeywordExport
 	KeywordNew
 	KeywordReturn
 	KeywordConst
@@ -85,6 +85,8 @@ const (
 	KeywordEnum
 	KeywordVariant
 	KeywordAlias
+	KeywordExport
+	KeywordExtern
 )
 
 func initTokenNames() {

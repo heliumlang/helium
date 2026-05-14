@@ -128,6 +128,7 @@ func (p *Parser) parseBlock() []Node {
 		}
 		body = append(body, p.parseStatement())
 	}
+
 	p.mustSkip(lexer.PunctRBrace)
 	return body
 }

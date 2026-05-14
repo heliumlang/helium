@@ -12,7 +12,6 @@ var reserved = []word{
 	w("record", KeywordRecord),
 	w("interface", KeywordInterface),
 	w("is", KeywordIs),
-	w("export", KeywordExport),
 	w("new", KeywordNew),
 	w("return", KeywordReturn),
 	w("const", KeywordConst),
@@ -37,6 +36,8 @@ var reserved = []word{
 	w("alias", KeywordAlias),
 	w("use", KeywordUse),
 	w("from", KeywordFrom),
+	w("export", KeywordExport),
+	w("extern", KeywordExtern),
 }
 
 func w(str string, kind TokenKind) word {
