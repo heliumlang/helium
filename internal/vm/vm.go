@@ -115,12 +115,10 @@ func (vm *OxyVM) Run() *oxyerr.Error {
 	}
 
 	vm.parser = parser.New(filename, tokens)
-	nodes := vm.parser.Parse()
+	ast := vm.parser.Parse()
 
 	if vm.debugAll() || vm.debug == DebugAST {
-		for _, node := range nodes {
-			fmt.Println(node.String())
-		}
+		fmt.Println(ast)
 	}
 
 	return nil

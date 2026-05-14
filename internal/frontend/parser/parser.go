@@ -72,7 +72,7 @@ func (p *Parser) isEOF() bool {
 	return t == nil || t.Kind() == lexer.EOF
 }
 
-func (p *Parser) Parse() []Node {
+func (p *Parser) Parse() Node {
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(parseError); !ok {
@@ -93,5 +93,5 @@ func (p *Parser) Parse() []Node {
 		}
 		prog.Items = append(prog.Items, p.parseDecl())
 	}
-	return []Node{prog}
+	return prog
 }
