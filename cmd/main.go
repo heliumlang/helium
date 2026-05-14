@@ -41,7 +41,10 @@ func main() {
 	file := os.Args[1]
 	v := vm.New()
 	v.LoadFile(file)
-	multibench(func() {
-		v.Run()
-	}, 100)
+	// multibench(func() {
+	// 	v.Run()
+	// }, 100)
+
+	v.SetDebug(vm.DebugAST)
+	v.Run()
 }
