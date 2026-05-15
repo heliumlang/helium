@@ -8,15 +8,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nykenik24/polo/internal/frontend/lexer"
-	"github.com/Nykenik24/polo/internal/poloerr"
+	"github.com/Nykenik24/helium/internal/frontend/lexer"
+	"github.com/Nykenik24/helium/internal/heliumerr"
 )
 
 type Parser struct {
-	tokens   []*lexer.Token   // list of tokens
-	index    int              // the index in the token list
-	filename string           // the filename of the source
-	trace    []*poloerr.Trace // the trace stack
+	tokens   []*lexer.Token     // list of tokens
+	index    int                // the index in the token list
+	filename string             // the filename of the source
+	trace    []*heliumerr.Trace // the trace stack
 }
 
 func New(file string, tokens []*lexer.Token) *Parser {
@@ -49,10 +49,10 @@ func (p *Parser) advance() *lexer.Token {
 
 // add a rule to the trace stack
 func (p *Parser) enterRule(name string) int {
-	entry := &poloerr.Trace{
+	entry := &heliumerr.Trace{
 		Name:    name,
 		Entered: time.Now(),
-		File:    "<polo>",
+		File:    "<helium>",
 	}
 	p.trace = append(p.trace, entry)
 	return len(p.trace) - 1
@@ -69,7 +69,7 @@ func (p *Parser) traceRm(i int) {
 
 // error & panic
 func (p *Parser) error(msg string, pos lexer.Position) {
-	err := poloerr.New(msg, p.trace)
+	err := heliumerr.New(msg, p.trace)
 	err.SetPos(pos.Line, pos.Col).SetFilename(p.filename).SetType("parse").Print()
 
 	panic(parseError{})

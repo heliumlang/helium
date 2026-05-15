@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Nykenik24/polo/internal/frontend/lexer"
+	"github.com/Nykenik24/helium/internal/frontend/lexer"
 )
 
 func (p *Parser) parseModule() Node {

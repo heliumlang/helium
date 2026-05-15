@@ -7,7 +7,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/Nykenik24/polo/internal/frontend/lexer"
+	"github.com/Nykenik24/helium/internal/frontend/lexer"
 )
 
 func (p *Parser) parseExpr() Node {

@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Nykenik24/polo/internal/poloerr"
+	"github.com/Nykenik24/helium/internal/heliumerr"
 )
 
 type Lexer interface {
-	Lex(input string) ([]*Token, *poloerr.Error)
+	Lex(input string) ([]*Token, *heliumerr.Error)
 	SetFilename(fname string)
 }
 
@@ -146,7 +146,7 @@ func (l *lexer) lexChar() (*Token, error) {
 	return NewToken(lexeme, Char), nil
 }
 
-func (l *lexer) Lex(input string) ([]*Token, *poloerr.Error) {
+func (l *lexer) Lex(input string) ([]*Token, *heliumerr.Error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
@@ -219,7 +219,7 @@ func (l *lexer) Lex(input string) ([]*Token, *poloerr.Error) {
 		col += l.i - starti
 
 		if err != nil {
-			return nil, poloerr.New(err.Error(), poloerr.EmptyTrace()).SetType("lex")
+			return nil, heliumerr.New(err.Error(), heliumerr.EmptyTrace()).SetType("lex")
 		}
 
 		token.line = line
