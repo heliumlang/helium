@@ -10,7 +10,7 @@ type Set[T comparable] struct {
 }
 
 func (s *Set[T]) Push(v T) error {
-	if slices.Contains(s.slice, v) {
+	if s.InSet(v) {
 		return errors.New("element already in set")
 	}
 
@@ -45,4 +45,16 @@ func (s *Set[T]) IndexOf(target T) (int, error) {
 	}
 
 	return -1, errors.New("not found")
+}
+
+func (s *Set[T]) Slice() []T {
+	return s.slice
+}
+
+func (s *Set[T]) Len() int {
+	return len(s.slice)
+}
+
+func (s *Set[T]) InSet(v T) bool {
+	return slices.Contains(s.slice, v)
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Nykenik24/helium/internal/frontend/lexer"
+	"github.com/Nykenik24/helium/internal/util"
 )
 
 type Span struct{ Start, End lexer.Position }
@@ -610,9 +611,9 @@ func (n ClosureExpr) String() string { return n.tree().String() }
 
 type VarDecl struct {
 	base
-	Idents []string
-	Exprs  []Node
-	Const  bool
+	Idents     []string
+	Exprs      []Node
+	Qualifiers *util.Set[string]
 }
 
 type Return struct {
@@ -632,10 +633,10 @@ type ExprStmt struct {
 
 func (n VarDecl) tree() *treeNode {
 	prefix := ""
-	if n.Const {
-		prefix = "const"
+	if n.Qualifiers.Len() > 0 {
+		prefix = strings.Join(n.Qualifiers.Slice(), " ")
 	}
-	return branch(prefix+" := "+strings.Join(n.Idents, ", "), nodesToChildren(n.Exprs)...)
+	return branch(fmt.Sprintf("%s %s :=", prefix, strings.Join(n.Idents, ", ")), nodesToChildren(n.Exprs)...)
 }
 func (n Return) tree() *treeNode   { return branch("return", nodesToChildren(n.Exprs)...) }
 func (n Raise) tree() *treeNode    { return branch("raise", nodeTree(n.Expr)) }
@@ -810,7 +811,7 @@ type StructField struct {
 	base
 	Type       Node
 	Name       string
-	Qualifiers []string
+	Qualifiers *util.Set[string]
 }
 
 type Init struct {
@@ -922,8 +923,8 @@ func (n RecordField) tree() *treeNode {
 }
 func (n StructField) tree() *treeNode {
 	label := n.Type.String() + " " + n.Name
-	if len(n.Qualifiers) > 0 {
-		label = strings.Join(n.Qualifiers, " ") + " " + label
+	if n.Qualifiers.Len() > 0 {
+		label = strings.Join(n.Qualifiers.Slice(), " ") + " " + label
 	}
 	return leaf(label)
 }

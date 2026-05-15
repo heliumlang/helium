@@ -6,15 +6,15 @@ package parser
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/Nykenik24/helium/internal/frontend/lexer"
+	"github.com/Nykenik24/helium/internal/util"
 )
 
 func (p *Parser) parseModule() Node {
 	ti := p.enterRule("parse module")
 	defer p.traceRm(ti)
-	p.mustSkip(lexer.KeywordMod)
+	p.mustSkip(lexer.KeywordModule)
 	name := p.mustRead(lexer.Ident)
 	p.mustSkip(lexer.NewLine)
 	return &Module{Name: name}
@@ -96,7 +96,7 @@ func (p *Parser) parseDecl() Node {
 		return p.parseUse()
 	case lexer.KeywordExtern:
 		return p.parseExtern()
-	case lexer.Ident:
+	case lexer.Ident, lexer.KeywordConst, lexer.KeywordCompile:
 		return p.parseVarDecl()
 	case lexer.KeywordFn, lexer.KeywordExport:
 		return p.parseFuncWithAnnotations(annotations)
@@ -112,11 +112,6 @@ func (p *Parser) parseDecl() Node {
 		return p.parseVariant()
 	case lexer.KeywordAlias:
 		return p.parseAlias()
-	case lexer.KeywordConst:
-		if p.isDeclAssign() {
-			return p.parseVarDecl()
-		}
-		return p.parseConst()
 	default:
 		p.error(fmt.Sprintf("expected declaration, got \x1b[33m%s\x1b[0m", t.Kind()), t.Pos())
 		return nil
@@ -140,9 +135,16 @@ func (p *Parser) parseAnnotation() Annotation {
 func (p *Parser) parseVarDecl() Node {
 	ti := p.enterRule("parse variable declaration")
 	defer p.traceRm(ti)
-	_const := false
-	if p.match(lexer.KeywordConst) {
-		_const = true
+	qualifiers := &util.Set[string]{}
+	for p.oneOf(
+		lexer.KeywordConst,
+		lexer.KeywordCompile,
+	) {
+		qualif := p.get(0).Lexeme()
+		if qualifiers.InSet(qualif) {
+			p.error(fmt.Sprintf("can't have more than one of the same qualifier in variable,\nfound \x1b[32m%q\x1b[0m two times", qualif), p.get(0).Pos())
+		}
+		qualifiers.Push(qualif)
 		p.advance()
 	}
 	idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
@@ -159,7 +161,7 @@ func (p *Parser) parseVarDecl() Node {
 	if p.match(lexer.NewLine) {
 		p.advance()
 	}
-	return VarDecl{Idents: idents, Exprs: exprs, Const: _const}
+	return VarDecl{Idents: idents, Exprs: exprs, Qualifiers: qualifiers}
 }
 
 func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
@@ -457,16 +459,16 @@ func (p *Parser) parseRecordField() RecordField {
 func (p *Parser) parseStructField() StructField {
 	ti := p.enterRule("parse struct field")
 	defer p.traceRm(ti)
-	var qualifiers []string
+	qualifiers := &util.Set[string]{}
 	for p.oneOf(
 		lexer.KeywordConst,
 		lexer.KeywordExport,
 	) {
 		qualif := p.get(0).Lexeme()
-		if slices.Contains(qualifiers, qualif) {
+		if qualifiers.InSet(qualif) {
 			p.error("can't have more than one of the same qualifier in field", p.get(0).Pos())
 		}
-		qualifiers = append(qualifiers, qualif)
+		qualifiers.Push(qualif)
 		p.advance()
 	}
 	_type := p.parseType()

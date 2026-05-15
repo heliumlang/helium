@@ -60,7 +60,7 @@ const (
 	PunctEllipsis
 	PunctPipe
 	KeywordFn
-	KeywordMod
+	KeywordModule
 	KeywordUse
 	KeywordFrom
 	KeywordStruct
@@ -91,6 +91,7 @@ const (
 	KeywordAlias
 	KeywordExport
 	KeywordExtern
+	KeywordCompile
 )
 
 func initTokenNames() {
