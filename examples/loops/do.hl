@@ -1,7 +1,0 @@
-mod main
-
-fn main() {
-    do {
-        println("hello, world!")
-    } while true
-}
