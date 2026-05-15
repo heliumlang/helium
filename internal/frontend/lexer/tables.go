@@ -117,4 +117,5 @@ var tokenNames = map[TokenKind]string{
 	String:   "String",
 	Char:     "Char",
 	NewLine:  "New line",
+	Shortcut: "Shortcut",
 }

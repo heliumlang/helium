@@ -5,7 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nykenik24/oxy/internal/vm"
+	"github.com/Nykenik24/oxy/internal/frontend/lexer"
+	"github.com/Nykenik24/oxy/internal/frontend/parser"
+	"github.com/Nykenik24/oxy/internal/oxyerr"
 )
 
 func puttime(elapsed time.Duration) {
@@ -32,19 +34,50 @@ func multibench(fn func(), iter int) {
 	puttime(elapsed)
 }
 
+type debug int
+
+const (
+	debugAll debug = iota
+	debugTokens
+	debugAST
+)
+
+var dbg = debugAST
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: oxy <filename>")
 		os.Exit(1)
 	}
 
-	file := os.Args[1]
-	v := vm.New()
-	v.LoadFile(file)
-	// multibench(func() {
-	// 	v.Run()
-	// }, 100)
+	lex := lexer.New()
+	path := os.Args[1]
+	lex.SetFilename(path)
 
-	v.SetDebug(vm.DebugAST)
-	v.Run()
+	source, readerr := os.ReadFile(path)
+	if readerr != nil {
+		oxyerr.New(readerr.Error(), oxyerr.EmptyTrace()).Print()
+		os.Exit(1)
+	}
+
+	tokens, err := lex.Lex(string(source))
+
+	if err != nil {
+		err.Print()
+		os.Exit(1)
+	}
+
+	if dbg == debugAll || dbg == debugTokens {
+		for _, tk := range tokens {
+			fmt.Println(tk)
+		}
+		fmt.Println()
+	}
+
+	parse := parser.New(path, tokens)
+	ast := parse.Parse()
+
+	if dbg == debugAll || dbg == debugAST {
+		fmt.Println(ast)
+	}
 }

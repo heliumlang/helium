@@ -165,7 +165,7 @@ func (l *lexer) Lex(input string) ([]*Token, *oxyerr.Error) {
 		}
 
 		var (
-			token *Token = NewToken([]byte(""), None)
+			token *Token = ZeroToken()
 			err   error  = nil
 		)
 
