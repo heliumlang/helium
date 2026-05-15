@@ -263,14 +263,23 @@ func (n BaseType) String() string {
 
 type FunctionType struct {
 	base
-	Args    []Node
-	Returns []Node
+	Args      []Node
+	Returns   []Node
+	Optional  bool
+	Throwable bool
 }
 
 func (n FunctionType) tree() *treeNode {
 	children := nodesToChildren(n.Args)
 	children = append(children, returnsChild(n.Returns))
-	return branch("fn type", children...)
+	label := "fn type"
+	if n.Optional {
+		label += "?"
+	}
+	if n.Throwable {
+		label += "!"
+	}
+	return branch(label, children...)
 }
 func (n FunctionType) String() string {
 	var args []string
@@ -286,12 +295,16 @@ func (n FunctionType) String() string {
 
 type ArrayType struct {
 	base
-	Values Node
+	Values    Node
+	Optional  bool
+	Throwable bool
 }
 type MapType struct {
 	base
-	Key   Node
-	Value Node
+	Key       Node
+	Value     Node
+	Optional  bool
+	Throwable bool
 }
 
 func (n ArrayType) tree() *treeNode { return branch("[]", nodeTree(n.Values)) }
@@ -303,8 +316,26 @@ func (n MapType) tree() *treeNode {
 	return br
 }
 
-func (n ArrayType) String() string { return n.Values.String() + "[]" }
-func (n MapType) String() string   { return n.Value.String() + "{" + n.Key.String() + "}" }
+func (n ArrayType) String() string {
+	label := "[]"
+	if n.Optional {
+		label += "?"
+	}
+	if n.Throwable {
+		label += "!"
+	}
+	return n.Values.String() + label
+}
+func (n MapType) String() string {
+	label := "{%s}"
+	if n.Optional {
+		label += "?"
+	}
+	if n.Throwable {
+		label += "!"
+	}
+	return n.Value.String() + fmt.Sprintf(label, n.Key.String())
+}
 
 type IntLit struct {
 	base

@@ -35,14 +35,7 @@ func (p *Parser) parseType() Node {
 			return p.parseMapType(base)
 		}
 
-		if p.match(lexer.OpQuestion) {
-			base.Optional = true
-			p.advance()
-		}
-		if p.match(lexer.OpExclamation) {
-			base.Throwable = true
-			p.advance()
-		}
+		base.Optional, base.Throwable = p.checkTypeQualifs()
 
 		return base
 
@@ -76,28 +69,36 @@ func (p *Parser) parseFunctionType() Node {
 func (p *Parser) parseArrayType(base Node) Node {
 	ti := p.enterRule("parse array type")
 	defer p.traceRm(ti)
-
 	node := base
+	if !p.match(lexer.PunctLBracket) {
+		p.error("expected left bracket in array type", p.get(0).Pos())
+	}
 	for p.match(lexer.PunctLBracket) {
 		p.mustSkip(lexer.PunctLBracket)
 		p.mustSkip(lexer.PunctRBracket)
 		node = ArrayType{Values: node}
 	}
-	return node
+	array := node.(ArrayType)
+	array.Optional, array.Throwable = p.checkTypeQualifs()
+	return array
 }
 
 func (p *Parser) parseMapType(base Node) Node {
 	ti := p.enterRule("parse map type")
 	defer p.traceRm(ti)
-
 	node := base
+	if !p.match(lexer.PunctLBrace) {
+		p.error("expected left brace in map type", p.get(0).Pos())
+	}
 	for p.match(lexer.PunctLBrace) {
 		p.mustSkip(lexer.PunctLBrace)
 		key := p.parseType()
 		p.mustSkip(lexer.PunctRBrace)
 		node = MapType{Key: key, Value: node}
 	}
-	return node
+	maptype := node.(MapType)
+	maptype.Optional, maptype.Throwable = p.checkTypeQualifs()
+	return maptype
 }
 
 func (p *Parser) parseTypeArgs() []Node {
@@ -106,4 +107,16 @@ func (p *Parser) parseTypeArgs() []Node {
 
 	p.mustSkip(lexer.OpSmaller)
 	return list(p, lexer.PunctComma, lexer.OpGreater, p.parseType)
+}
+
+func (p *Parser) checkTypeQualifs() (opt, throw bool) {
+	if p.match(lexer.OpQuestion) {
+		opt = true
+		p.advance()
+	}
+	if p.match(lexer.OpExclamation) {
+		throw = true
+		p.advance()
+	}
+	return opt, throw
 }
