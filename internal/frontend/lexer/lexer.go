@@ -1,5 +1,5 @@
 /*
- * Oxy's lexer
+ * Polo's lexer
  */
 
 package lexer
@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Nykenik24/oxy/internal/oxyerr"
+	"github.com/Nykenik24/polo/internal/poloerr"
 )
 
 type Lexer interface {
-	Lex(input string) ([]*Token, *oxyerr.Error)
+	Lex(input string) ([]*Token, *poloerr.Error)
 	SetFilename(fname string)
 }
 
@@ -146,7 +146,7 @@ func (l *lexer) lexChar() (*Token, error) {
 	return NewToken(lexeme, Char), nil
 }
 
-func (l *lexer) Lex(input string) ([]*Token, *oxyerr.Error) {
+func (l *lexer) Lex(input string) ([]*Token, *poloerr.Error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
@@ -219,7 +219,7 @@ func (l *lexer) Lex(input string) ([]*Token, *oxyerr.Error) {
 		col += l.i - starti
 
 		if err != nil {
-			return nil, oxyerr.New(err.Error(), oxyerr.EmptyTrace()).SetType("lex")
+			return nil, poloerr.New(err.Error(), poloerr.EmptyTrace()).SetType("lex")
 		}
 
 		token.line = line

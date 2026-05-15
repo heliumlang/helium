@@ -7,7 +7,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/Nykenik24/oxy/internal/frontend/lexer"
+	"github.com/Nykenik24/polo/internal/frontend/lexer"
 )
 
 func (p *Parser) parseType() Node {

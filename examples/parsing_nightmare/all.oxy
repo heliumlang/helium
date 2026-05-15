@@ -121,7 +121,7 @@ struct UserStorage is Container<User>, Stringer {
 
 const int    maxRetries  = 3
 const float  pi          = 3.14159
-const string appName     = "OxyDemo"
+const string appName     = "PoloDemo"
 const bool   debugMode   = true
 
 # ─── Top-level functions ──────────────────────────────────────────────────────

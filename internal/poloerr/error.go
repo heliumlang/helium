@@ -1,4 +1,4 @@
-package oxyerr
+package poloerr
 
 import (
 	"fmt"

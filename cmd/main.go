@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nykenik24/oxy/internal/frontend/lexer"
-	"github.com/Nykenik24/oxy/internal/frontend/parser"
-	"github.com/Nykenik24/oxy/internal/oxyerr"
+	"github.com/Nykenik24/polo/internal/frontend/lexer"
+	"github.com/Nykenik24/polo/internal/frontend/parser"
+	"github.com/Nykenik24/polo/internal/poloerr"
 )
 
 func puttime(elapsed time.Duration) {
@@ -46,7 +46,7 @@ var dbg = debugAST
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: oxy <filename>")
+		fmt.Println("Usage: polo <filename>")
 		os.Exit(1)
 	}
 
@@ -56,7 +56,7 @@ func main() {
 
 	source, readerr := os.ReadFile(path)
 	if readerr != nil {
-		oxyerr.New(readerr.Error(), oxyerr.EmptyTrace()).Print()
+		poloerr.New(readerr.Error(), poloerr.EmptyTrace()).Print()
 		os.Exit(1)
 	}
 

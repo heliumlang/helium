@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Nykenik24/oxy/internal/frontend/lexer"
+	"github.com/Nykenik24/polo/internal/frontend/lexer"
 )
 
 type Span struct{ Start, End lexer.Position }
