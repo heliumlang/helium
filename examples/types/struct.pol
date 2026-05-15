@@ -1,4 +1,4 @@
-module main
+mod main
 
 struct Point {
     pub int x

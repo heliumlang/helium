@@ -1,5 +1,5 @@
 (* Top Level *)
-program         = "module" IDENT , { declaration } ;
+program         = "mod" IDENT , { declaration } ;
 
 declaration     = fn_decl
                 | struct_decl

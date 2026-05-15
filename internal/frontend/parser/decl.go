@@ -14,7 +14,7 @@ import (
 func (p *Parser) parseModule() Node {
 	ti := p.enterRule("parse module")
 	defer p.traceRm(ti)
-	p.mustSkip(lexer.KeywordModule)
+	p.mustSkip(lexer.KeywordMod)
 	name := p.mustRead(lexer.Ident)
 	p.mustSkip(lexer.NewLine)
 	return &Module{Name: name}

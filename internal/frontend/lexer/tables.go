@@ -15,7 +15,7 @@ type word struct {
 // keyword table
 var reserved = []word{
 	w("fn", KeywordFn),
-	w("module", KeywordModule),
+	w("mod", KeywordMod),
 	w("struct", KeywordStruct),
 	w("record", KeywordRecord),
 	w("interface", KeywordInterface),

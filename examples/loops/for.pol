@@ -1,4 +1,4 @@
-module main
+mod main
 
 struct StringList is Iterable<string> {
     string[] strings

@@ -1,4 +1,4 @@
-module main
+mod main
 
 fn apply(int[] nums, fn(int) int f) int[] {
     result := []int

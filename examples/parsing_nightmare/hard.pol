@@ -1,4 +1,4 @@
-module edgecases
+mod edgecases
 
 # ─── Aliases referencing aliases ──────────────────────────────────────────────
 

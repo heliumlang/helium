@@ -1,4 +1,4 @@
-module main
+mod main
 
 # can't have methods, initializers or unexported fields;
 # made to just carry data

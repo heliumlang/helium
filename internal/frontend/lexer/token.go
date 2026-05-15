@@ -60,7 +60,7 @@ const (
 	PunctEllipsis
 	PunctPipe
 	KeywordFn
-	KeywordModule
+	KeywordMod
 	KeywordUse
 	KeywordFrom
 	KeywordStruct

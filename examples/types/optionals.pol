@@ -1,4 +1,4 @@
-module main
+mod main
 
 record User {
     pub string name

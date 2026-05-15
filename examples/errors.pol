@@ -1,4 +1,4 @@
-module main
+mod main
 
 fn divide(a float, b float) float! {
     if b == 0.0 {
