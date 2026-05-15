@@ -341,11 +341,11 @@ func (p *Parser) parseMapLit() Node {
 	ti := p.enterRule("parse map literal")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.PunctLBrace)
-	elements := list(p, lexer.PunctComma, lexer.PunctRBrace, p.parseMapPair)
+	elements := list[MapPair](p, lexer.PunctComma, lexer.PunctRBrace, p.parseMapPair)
 	return MapLit{Elements: elements}
 }
 
-func (p *Parser) parseMapPair() Node {
+func (p *Parser) parseMapPair() MapPair {
 	key := p.parseExpr()
 	p.mustSkip(lexer.PunctColon)
 	value := p.parseExpr()

@@ -389,7 +389,7 @@ type MapPair struct {
 }
 type MapLit struct {
 	base
-	Elements []Node
+	Elements []MapPair
 }
 
 func (n MapPair) tree() *treeNode {
