@@ -235,7 +235,7 @@ func (p *Parser) parseRecordBody() []Node {
 		if p.match(lexer.PunctRBrace) {
 			break
 		}
-		fields = append(fields, p.parseStructField())
+		fields = append(fields, p.parseRecordField())
 		p.mustSkip(lexer.NewLine)
 	}
 	p.mustSkip(lexer.PunctRBrace)
@@ -441,6 +441,17 @@ func (p *Parser) parseInit() Init {
 	params := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
 	body := p.parseBlock()
 	return Init{Params: params, Body: body}
+}
+
+func (p *Parser) parseRecordField() RecordField {
+	ti := p.enterRule("parse struct field")
+	defer p.traceRm(ti)
+	_type := p.parseType()
+	name := p.mustRead(lexer.Ident)
+	return RecordField{
+		Name: name,
+		Type: _type,
+	}
 }
 
 func (p *Parser) parseStructField() StructField {

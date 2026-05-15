@@ -801,6 +801,11 @@ type FnSig struct {
 	Returns []Node
 }
 
+type RecordField struct {
+	base
+	Type Node
+	Name string
+}
 type StructField struct {
 	base
 	Type       Node
@@ -911,6 +916,10 @@ func (n FnSig) tree() *treeNode {
 }
 func (n FnSig) String() string { return n.tree().String() }
 
+func (n RecordField) tree() *treeNode {
+	label := n.Type.String() + " " + n.Name
+	return leaf(label)
+}
 func (n StructField) tree() *treeNode {
 	label := n.Type.String() + " " + n.Name
 	if len(n.Qualifiers) > 0 {
@@ -918,6 +927,7 @@ func (n StructField) tree() *treeNode {
 	}
 	return leaf(label)
 }
+func (n RecordField) String() string { return n.tree().String() }
 func (n StructField) String() string { return n.tree().String() }
 
 func (n Init) tree() *treeNode {
