@@ -161,6 +161,7 @@ func (l *lexer) Lex(input string) ([]*Token, *heliumerr.Error) {
 			for l.curr() != '\n' {
 				l.i++
 			}
+			line++
 			continue
 		}
 
