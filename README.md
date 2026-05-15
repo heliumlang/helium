@@ -1,7 +1,7 @@
-<h1 align="center"><strong>Polo</strong></h1>
-<p align="center"><em><small>/p'olo/</small></em></p>
+<h1 align="center"><strong>Helium</strong></h1>
+<p align="center"><em><small>Modern scripting language</small></em></p>
 
-Polo is a simple scripting language that ensures safety, correctness and ease of use.
+Helium is a simple scripting language that ensures safety, correctness and ease of use.
 
 ```rust
 mod main
