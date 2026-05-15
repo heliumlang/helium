@@ -1,3 +1,7 @@
+/*
+ * Parsing helpers
+ */
+
 package parser
 
 import (
@@ -8,16 +12,19 @@ import (
 	"github.com/Nykenik24/oxy/internal/frontend/lexer"
 )
 
+// check if index >= 0 && index < len(tokens)
 func (p *Parser) inbounds(n int) bool {
 	i := p.index + n
 	return i >= 0 && i < len(p.tokens)
 }
 
+// check if current matches kind
 func (p *Parser) match(kind lexer.TokenKind) bool {
 	t := p.get(0)
 	return t != nil && t.Kind() == kind
 }
 
+// panic if current doesn't match kind
 func (p *Parser) must(kind lexer.TokenKind) *lexer.Token {
 	t := p.get(0)
 	if t == nil || t.Kind() != kind {
@@ -35,21 +42,27 @@ func (p *Parser) must(kind lexer.TokenKind) *lexer.Token {
 	return t
 }
 
+// panic if current doesn't match kind,
+// if it does skip the token
 func (p *Parser) mustSkip(kind lexer.TokenKind) *lexer.Token {
 	p.must(kind)
 	return p.advance()
 }
 
+// panic if current doesn't match kind,
+// if it does return the lexeme
 func (p *Parser) mustRead(kind lexer.TokenKind) string {
 	lexeme := p.must(kind).Lexeme()
 	p.advance()
 	return lexeme
 }
 
+// check if current matches one of kinds
 func (p *Parser) oneOf(kinds ...lexer.TokenKind) bool {
 	return slices.Contains(kinds, p.get(0).Kind())
 }
 
+// panic if current doesn't match one of kinds
 func (p *Parser) mustOneOf(kinds ...lexer.TokenKind) *lexer.Token {
 	if p.oneOf(kinds...) {
 		t := p.get(0)
@@ -64,6 +77,7 @@ func (p *Parser) mustOneOf(kinds ...lexer.TokenKind) *lexer.Token {
 	return nil
 }
 
+// create a list
 func list[T any](p *Parser, sep, end lexer.TokenKind, fn func() T) []T {
 	var items []T
 	for !p.match(end) {
@@ -87,16 +101,4 @@ func list[T any](p *Parser, sep, end lexer.TokenKind, fn func() T) []T {
 	}
 	p.mustSkip(end)
 	return items
-}
-
-func block[T Node](p *Parser, open, close lexer.TokenKind, fn func() T) []T {
-	var body []T
-
-	p.mustSkip(open)
-	for !p.match(close) {
-		body = append(body, fn())
-	}
-	p.mustSkip(close)
-
-	return body
 }

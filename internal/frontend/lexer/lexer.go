@@ -1,3 +1,7 @@
+/*
+ * Oxy's lexer
+ */
+
 package lexer
 
 import (
@@ -12,12 +16,13 @@ type Lexer interface {
 	SetFilename(fname string)
 }
 
+/* built-in lexer */
 type lexer struct {
-	tokens   []*Token
-	input    string
-	n        int
-	i        int
-	filename string
+	tokens   []*Token // emitted tokens
+	input    string   // source to lex
+	n        int      // source length
+	i        int      // source index
+	filename string   // source's filename
 }
 
 func New() Lexer {
@@ -28,10 +33,12 @@ func (l *lexer) SetFilename(fname string) {
 	l.filename = fname
 }
 
+// check if index < length
 func (l *lexer) inbounds() bool {
 	return l.i < l.n
 }
 
+// get current character
 func (l *lexer) curr() byte {
 	return l.input[l.i]
 }

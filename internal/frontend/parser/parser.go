@@ -1,3 +1,7 @@
+/*
+ * Oxy's parser
+ */
+
 package parser
 
 import (
@@ -9,10 +13,10 @@ import (
 )
 
 type Parser struct {
-	tokens   []*lexer.Token
-	index    int
-	filename string
-	trace    []*oxyerr.Trace
+	tokens   []*lexer.Token  // list of tokens
+	index    int             // the index in the token list
+	filename string          // the filename of the source
+	trace    []*oxyerr.Trace // the trace stack
 }
 
 func New(file string, tokens []*lexer.Token) *Parser {
@@ -23,6 +27,7 @@ func New(file string, tokens []*lexer.Token) *Parser {
 	}
 }
 
+// get tokens[index + n]
 func (p *Parser) get(n int) *lexer.Token {
 	if !p.inbounds(n) {
 		return nil
@@ -30,6 +35,7 @@ func (p *Parser) get(n int) *lexer.Token {
 	return p.tokens[p.index+n]
 }
 
+// consume token
 func (p *Parser) advance() *lexer.Token {
 	p.index++
 	if !p.inbounds(0) {
@@ -41,6 +47,7 @@ func (p *Parser) advance() *lexer.Token {
 	return p.get(0)
 }
 
+// add a rule to the trace stack
 func (p *Parser) enterRule(name string) int {
 	entry := &oxyerr.Trace{
 		Name:    name,
@@ -51,6 +58,8 @@ func (p *Parser) enterRule(name string) int {
 	return len(p.trace) - 1
 }
 
+// remove a rule from the trace stack with it's
+// trace index
 func (p *Parser) traceRm(i int) {
 	if i < 0 || i >= len(p.trace) {
 		return
@@ -58,6 +67,7 @@ func (p *Parser) traceRm(i int) {
 	p.trace = p.trace[:i]
 }
 
+// error & panic
 func (p *Parser) error(msg string, pos lexer.Position) {
 	err := oxyerr.New(msg, p.trace)
 	err.SetPos(pos.Line, pos.Col).SetFilename(p.filename).SetType("parse").Print()
@@ -67,6 +77,7 @@ func (p *Parser) error(msg string, pos lexer.Position) {
 
 type parseError struct{}
 
+// check if the current token is nil/EOF
 func (p *Parser) isEOF() bool {
 	t := p.get(0)
 	return t == nil || t.Kind() == lexer.EOF

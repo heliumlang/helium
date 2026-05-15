@@ -1,3 +1,7 @@
+/*
+ * Token kinds and token structure
+ */
+
 package lexer
 
 import (
@@ -117,9 +121,9 @@ func (k TokenKind) String() string {
 }
 
 type Token struct {
-	lexeme            []byte
-	kind              TokenKind
-	line, col, offset int
+	lexeme            []byte    // the text of the token
+	kind              TokenKind // the kind of the token
+	line, col, offset int       // line, column and offset (end) of the token in the source
 }
 
 type Position struct{ Line, Col, Offset int }
@@ -139,10 +143,12 @@ func NewToken(lexeme []byte, kind TokenKind) *Token {
 	}
 }
 
+// get text
 func (t *Token) Lexeme() string {
 	return string(t.lexeme)
 }
 
+// get kind
 func (t *Token) Kind() TokenKind {
 	return t.kind
 }
@@ -170,6 +176,7 @@ func (t *Token) Pos() Position {
 	return Position{Line: t.Line(), Col: t.Col(), Offset: t.Offset()}
 }
 
+// get an empty token
 func ZeroToken() *Token {
 	return NewToken([]byte(""), None)
 }

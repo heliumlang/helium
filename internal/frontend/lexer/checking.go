@@ -1,3 +1,7 @@
+/*
+ * Check helpers for the lexer.
+ */
+
 package lexer
 
 import "slices"

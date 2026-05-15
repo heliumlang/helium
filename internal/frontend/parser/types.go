@@ -1,3 +1,7 @@
+/*
+ * Type parsing
+ */
+
 package parser
 
 import (

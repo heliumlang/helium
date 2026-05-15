@@ -1,3 +1,10 @@
+/*
+ * Tables for the lexer.
+ *
+ * The lexer uses these to map certain keywords/operators/punctuations
+ * to the corresponding token kind.
+ */
+
 package lexer
 
 type word struct {
@@ -5,6 +12,7 @@ type word struct {
 	kind TokenKind
 }
 
+// keyword table
 var reserved = []word{
 	w("fn", KeywordFn),
 	w("module", KeywordModule),
@@ -40,13 +48,7 @@ var reserved = []word{
 	w("extern", KeywordExtern),
 }
 
-func w(str string, kind TokenKind) word {
-	return word{
-		str:  str,
-		kind: kind,
-	}
-}
-
+// operator table
 var operators = []word{
 	w("+", OpAdd),
 	w("-", OpSub),
@@ -79,6 +81,7 @@ var operators = []word{
 	w("=>", OpArrow),
 }
 
+// punctuation table
 var punct = []word{
 	w(".", PunctPeriod),
 	w(",", PunctComma),
@@ -94,6 +97,14 @@ var punct = []word{
 	w("...", PunctEllipsis),
 }
 
+func w(str string, kind TokenKind) word {
+	return word{
+		str:  str,
+		kind: kind,
+	}
+}
+
+// DO NOT CHANGE
 var initializedTokenNames = false
 
 var tokenNames = map[TokenKind]string{

@@ -1,3 +1,7 @@
+/*
+ * Statement parsing
+ */
+
 package parser
 
 import (

@@ -1,3 +1,7 @@
+/*
+ * Node definitions
+ */
+
 package parser
 
 import (

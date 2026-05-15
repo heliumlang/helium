@@ -1,3 +1,7 @@
+/*
+ * Expression parsing
+ */
+
 package parser
 
 import (
