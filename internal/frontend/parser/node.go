@@ -288,9 +288,23 @@ type ArrayType struct {
 	base
 	Values Node
 }
+type MapType struct {
+	base
+	Key   Node
+	Value Node
+}
 
 func (n ArrayType) tree() *treeNode { return branch("[]", nodeTree(n.Values)) }
-func (n ArrayType) String() string  { return n.Values.String() + "[]" }
+func (n MapType) tree() *treeNode {
+	var children []*treeNode
+	children = append(children, branch("key", nodeTree(n.Key)))
+	children = append(children, branch("value", nodeTree(n.Value)))
+	br := branch("{}", children...)
+	return br
+}
+
+func (n ArrayType) String() string { return n.Values.String() + "[]" }
+func (n MapType) String() string   { return n.Value.String() + "{" + n.Key.String() + "}" }
 
 type IntLit struct {
 	base

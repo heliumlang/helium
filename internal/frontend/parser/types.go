@@ -31,6 +31,8 @@ func (p *Parser) parseType() Node {
 
 		if p.match(lexer.PunctLBracket) {
 			return p.parseArrayType(base)
+		} else if p.match(lexer.PunctLBrace) {
+			return p.parseMapType(base)
 		}
 
 		if p.match(lexer.OpQuestion) {
@@ -72,7 +74,7 @@ func (p *Parser) parseFunctionType() Node {
 }
 
 func (p *Parser) parseArrayType(base Node) Node {
-	ti := p.enterRule("parse array tpe")
+	ti := p.enterRule("parse array type")
 	defer p.traceRm(ti)
 
 	node := base
@@ -80,6 +82,20 @@ func (p *Parser) parseArrayType(base Node) Node {
 		p.mustSkip(lexer.PunctLBracket)
 		p.mustSkip(lexer.PunctRBracket)
 		node = ArrayType{Values: node}
+	}
+	return node
+}
+
+func (p *Parser) parseMapType(base Node) Node {
+	ti := p.enterRule("parse map type")
+	defer p.traceRm(ti)
+
+	node := base
+	for p.match(lexer.PunctLBrace) {
+		p.mustSkip(lexer.PunctLBrace)
+		key := p.parseType()
+		p.mustSkip(lexer.PunctRBrace)
+		node = MapType{Key: key, Value: node}
 	}
 	return node
 }
