@@ -318,14 +318,20 @@ func (p *Parser) parseClosure() Node {
 	p.mustSkip(lexer.PunctLParen)
 	params := list(p, lexer.PunctComma, lexer.PunctRParen, p.parseDeclArg)
 	var returns []Node
-	if !p.match(lexer.PunctLBrace) {
+	if !p.oneOf(lexer.PunctLBrace, lexer.OpArrow) {
 		returns = append(returns, p.parseType())
 		for p.match(lexer.PunctComma) {
 			p.advance()
 			returns = append(returns, p.parseType())
 		}
 	}
-	body := p.parseBlock()
+	var body []Node
+	if p.match(lexer.OpArrow) {
+		p.advance()
+		body = append(body, p.parseStmt())
+	} else {
+		body = p.parseBlock()
+	}
 	return ClosureExpr{Params: params, Returns: returns, Body: body}
 }
 
