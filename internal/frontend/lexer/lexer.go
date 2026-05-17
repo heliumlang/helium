@@ -68,7 +68,6 @@ func (l *lexer) lexShortcut() (*Token, error) {
 	if l.input[l.i] != '$' {
 		return nil, fmt.Errorf("shortcut doesn't start with $")
 	}
-	l.i++
 
 	lexeme = append(lexeme, l.input[l.i])
 	l.i++
