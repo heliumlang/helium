@@ -1,3 +1,3 @@
-module github.com/Nykenik24/helium
+module github.com/heliumlang/helium
 
 go 1.26.2
