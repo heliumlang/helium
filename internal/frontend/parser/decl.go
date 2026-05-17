@@ -7,8 +7,8 @@ package parser
 import (
 	"fmt"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
-	"github.com/Nykenik24/helium/internal/util"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/util"
 )
 
 func (p *Parser) parseModule() Node {
@@ -92,10 +92,7 @@ func (p *Parser) parseDecl() Node {
 	}
 	t := p.get(0)
 	switch t.Kind() {
-	case lexer.KeywordUse:
-		return p.parseUse()
-	case lexer.KeywordExtern:
-		return p.parseExtern()
+
 	case lexer.Ident, lexer.KeywordConst, lexer.KeywordCompile:
 		return p.parseVarDecl()
 	case lexer.KeywordFn, lexer.KeywordExport:

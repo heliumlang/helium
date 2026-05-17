@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
-	"github.com/Nykenik24/helium/internal/frontend/parser"
-	"github.com/Nykenik24/helium/internal/heliumerr"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/frontend/parser"
+	"github.com/heliumlang/helium/internal/heliumerr"
 )
 
 func puttime(elapsed time.Duration) {
@@ -40,9 +40,10 @@ const (
 	debugAll debug = iota
 	debugTokens
 	debugAST
+	debugCompiler
 )
 
-var dbg = debugAST
+var dbg = debugCompiler
 
 func main() {
 	if len(os.Args) < 2 {

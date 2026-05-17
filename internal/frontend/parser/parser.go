@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
-	"github.com/Nykenik24/helium/internal/heliumerr"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/heliumerr"
 )
 
 type Parser struct {

@@ -7,7 +7,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
 )
 
 func (p *Parser) parseType() Node {
@@ -28,14 +28,13 @@ func (p *Parser) parseType() Node {
 		}
 
 		base := BaseType{Typename: name, TypeArgs: typeArgs}
+		base.Optional, base.Throwable = p.checkTypeQualifs()
 
 		if p.match(lexer.PunctLBracket) {
 			return p.parseArrayType(base)
 		} else if p.match(lexer.PunctLBrace) {
 			return p.parseMapType(base)
 		}
-
-		base.Optional, base.Throwable = p.checkTypeQualifs()
 
 		return base
 

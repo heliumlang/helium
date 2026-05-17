@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Nykenik24/helium/internal/heliumerr"
+	"github.com/heliumlang/helium/internal/heliumerr"
 )
 
 type Lexer interface {

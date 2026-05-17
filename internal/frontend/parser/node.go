@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
-	"github.com/Nykenik24/helium/internal/util"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/util"
 )
 
 type Span struct{ Start, End lexer.Position }

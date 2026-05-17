@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Nykenik24/helium/internal/frontend/lexer"
+	"github.com/heliumlang/helium/internal/frontend/lexer"
 )
 
 // check if index >= 0 && index < len(tokens)
