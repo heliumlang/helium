@@ -102,7 +102,18 @@ func (p *Parser) Parse() Node {
 		if p.isEOF() {
 			break
 		}
-		prog.Items = append(prog.Items, p.parseDecl())
+		prog.Items = append(prog.Items, p.parseTopLevel())
 	}
 	return prog
+}
+
+func (p *Parser) parseTopLevel() Node {
+	t := p.get(0)
+	switch t.Kind() {
+	case lexer.KeywordUse, lexer.KeywordExtern:
+		return p.parseStmt()
+
+	default:
+		return p.parseDecl()
+	}
 }

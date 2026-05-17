@@ -24,44 +24,50 @@ func (p *Parser) parseUse() Node {
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordUse)
 
+	if p.match(lexer.Shortcut) {
+		return &Use{
+			Kind: UseNamespace,
+			Path: p.parsePath(),
+		}
+	}
+
 	var (
-		from     *From = nil
-		wildcard       = false
-		members  []string
+		kind    UseKind
+		members []string
 	)
 
 	if p.match(lexer.OpMul) {
-		wildcard = true
 		p.advance()
+		kind = UseWildcard
 	} else {
+		kind = UseMembers
 		members = append(members, p.mustRead(lexer.Ident))
 		for p.match(lexer.PunctComma) {
 			p.advance()
-			if p.match(lexer.Ident) {
-				members = append(members, p.get(0).Lexeme())
-				p.advance()
-			} else {
+			if !p.match(lexer.Ident) {
 				break
 			}
+			members = append(members, p.mustRead(lexer.Ident))
 		}
 	}
 
-	if p.match(lexer.KeywordFrom) {
-		p.advance()
-		var path []*lexer.Token
-		path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut))
-		for p.match(lexer.OpDiv) {
-			p.advance()
-			path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut))
-		}
-		from = &From{Path: path}
-	}
+	p.mustSkip(lexer.KeywordFrom)
 
 	return &Use{
-		From:     from,
-		Members:  members,
-		Wildcard: wildcard,
+		Kind:    kind,
+		Path:    p.parsePath(),
+		Members: members,
 	}
+}
+
+func (p *Parser) parsePath() []string {
+	var path []string
+	path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut).Lexeme())
+	for p.match(lexer.OpDiv) {
+		p.advance()
+		path = append(path, p.mustOneOf(lexer.Ident, lexer.Shortcut).Lexeme())
+	}
+	return path
 }
 
 func (p *Parser) parseExtern() Node {
@@ -79,7 +85,7 @@ func (p *Parser) parseExtern() Node {
 	}
 }
 
-func (p *Parser) parseStatement() Node {
+func (p *Parser) parseStmt() Node {
 	ti := p.enterRule("parse statement")
 	defer p.traceRm(ti)
 	for p.match(lexer.NewLine) {
@@ -203,7 +209,7 @@ func (p *Parser) parseBlock() []Node {
 		if p.match(lexer.PunctRBrace) || p.isEOF() {
 			break
 		}
-		body = append(body, p.parseStatement())
+		body = append(body, p.parseStmt())
 	}
 
 	p.mustSkip(lexer.PunctRBrace)

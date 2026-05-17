@@ -63,7 +63,7 @@ func (l *lexer) lexIdent() (*Token, error) {
 
 func (l *lexer) lexShortcut() (*Token, error) {
 	var lexeme []byte
-	kind := Ident
+	kind := Shortcut
 
 	if l.input[l.i] != '$' {
 		return nil, fmt.Errorf("shortcut doesn't start with $")

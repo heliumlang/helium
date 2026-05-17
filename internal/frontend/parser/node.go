@@ -172,44 +172,38 @@ type Module struct {
 	base
 	Name string
 }
-type From struct {
-	base
-	Path []*lexer.Token
-}
+type UseKind int
+
+const (
+	UseNamespace UseKind = iota
+	UseWildcard
+	UseMembers
+)
+
 type Use struct {
 	base
-	Members  []string
-	From     *From
-	Wildcard bool
+	Kind    UseKind
+	Path    []string
+	Members []string
 }
 type Extern struct {
 	base
 	Members []string
 }
 
-func (n From) tree() *treeNode {
-	var lexemes []string
-	for _, tk := range n.Path {
-		lexemes = append(lexemes, tk.Lexeme())
-	}
-	return leaf("from: " + strings.Join(lexemes, "/"))
-}
 func (n Use) tree() *treeNode {
-	var children []*treeNode
-
-	if !n.Wildcard {
-		children = append(children, branch("members", arrToNodes(n.Members, func(s string) *treeNode {
+	pathStr := strings.Join(n.Path, "/")
+	switch n.Kind {
+	case UseNamespace:
+		return leaf("use namespace: " + pathStr)
+	case UseWildcard:
+		return branch("use * from " + pathStr)
+	case UseMembers:
+		return branch("use from "+pathStr, arrToNodes(n.Members, func(s string) *treeNode {
 			return leaf(s)
-		})...))
-	} else {
-		children = append(children, leaf("all members"))
+		})...)
 	}
-
-	if n.From != nil {
-		children = append(children, n.From.tree())
-	}
-
-	return branch("Use", children...)
+	return nil
 }
 func (n Extern) tree() *treeNode {
 	return branch("extern", arrToNodes(n.Members, func(v string) *treeNode {
@@ -218,7 +212,6 @@ func (n Extern) tree() *treeNode {
 }
 func (n Module) tree() *treeNode { return leaf(fmt.Sprintf("Module(%q)", n.Name)) }
 
-func (n From) String() string   { return n.tree().String() }
 func (n Module) String() string { return n.tree().String() }
 func (n Extern) String() string { return n.tree().String() }
 func (n Use) String() string    { return n.tree().String() }

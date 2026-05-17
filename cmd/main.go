@@ -40,10 +40,9 @@ const (
 	debugAll debug = iota
 	debugTokens
 	debugAST
-	debugCompiler
 )
 
-var dbg = debugCompiler
+var dbg = debugAll
 
 func main() {
 	if len(os.Args) < 2 {
