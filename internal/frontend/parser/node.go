@@ -815,11 +815,12 @@ type Init struct {
 
 type Struct struct {
 	base
-	Name       string
-	Generics   []Node
-	Interfaces []Node
-	Fields     []StructField
-	Inits      []Init
+	Name        string
+	Generics    []Node
+	Interfaces  []Node
+	Fields      []StructField
+	Inits       []Init
+	Annotations []Annotation
 }
 
 type Record struct {
@@ -831,9 +832,10 @@ type Record struct {
 
 type Interface struct {
 	base
-	Name     string
-	Generics []Node
-	Members  []Node
+	Name        string
+	Generics    []Node
+	Members     []Node
+	Annotations []Annotation
 }
 
 type EnumVariant struct {
@@ -941,6 +943,9 @@ func (n Struct) tree() *treeNode {
 	for _, init := range n.Inits {
 		children = append(children, init.tree())
 	}
+	for _, a := range n.Annotations {
+		children = append(children, a.tree())
+	}
 	return branch(label, children...)
 }
 func (n Struct) String() string { return n.tree().String() }
@@ -951,7 +956,11 @@ func (n Record) tree() *treeNode {
 func (n Record) String() string { return n.tree().String() }
 
 func (n Interface) tree() *treeNode {
-	return branch(genericLabel("interface "+n.Name, n.Generics), nodesToChildren(n.Members)...)
+	children := nodesToChildren(n.Members)
+	for _, a := range n.Annotations {
+		children = append(children, a.tree())
+	}
+	return branch(genericLabel("interface "+n.Name, n.Generics), children...)
 }
 func (n Interface) String() string { return n.tree().String() }
 

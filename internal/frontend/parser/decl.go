@@ -27,13 +27,13 @@ func (p *Parser) parseDecl() Node {
 	case lexer.Ident, lexer.KeywordConst, lexer.KeywordCompile:
 		return p.parseVarDecl()
 	case lexer.KeywordFn, lexer.KeywordExport:
-		return p.parseFuncWithAnnotations(annotations)
+		return p.parseFunc(annotations)
 	case lexer.KeywordStruct:
-		return p.parseStruct()
+		return p.parseStruct(annotations)
 	case lexer.KeywordRecord:
 		return p.parseRecord()
 	case lexer.KeywordInterface:
-		return p.parseInterface()
+		return p.parseInterface(annotations)
 	case lexer.KeywordEnum:
 		return p.parseEnum()
 	case lexer.KeywordVariant:
@@ -92,7 +92,7 @@ func (p *Parser) parseVarDecl() Node {
 	return VarDecl{Idents: idents, Exprs: exprs, Qualifiers: qualifiers}
 }
 
-func (p *Parser) parseFuncWithAnnotations(annotations []Annotation) Node {
+func (p *Parser) parseFunc(annotations []Annotation) Node {
 	ti := p.enterRule("parse function declaration")
 	defer p.traceRm(ti)
 	public := false
@@ -172,7 +172,7 @@ func (p *Parser) parseRecordBody() []Node {
 	return fields
 }
 
-func (p *Parser) parseInterface() Node {
+func (p *Parser) parseInterface(annotations []Annotation) Node {
 	ti := p.enterRule("parse interface declaration")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordInterface)
@@ -201,9 +201,10 @@ func (p *Parser) parseInterface() Node {
 	}
 	p.mustSkip(lexer.PunctRBrace)
 	return Interface{
-		Name:     name,
-		Generics: generics,
-		Members:  members,
+		Name:        name,
+		Generics:    generics,
+		Members:     members,
+		Annotations: annotations,
 	}
 }
 
@@ -312,7 +313,7 @@ func (p *Parser) parseConst() Node {
 	return Const{Type: t, Name: name, Expr: expr}
 }
 
-func (p *Parser) parseStruct() Node {
+func (p *Parser) parseStruct(annotations []Annotation) Node {
 	ti := p.enterRule("parse struct declaration")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.KeywordStruct)
@@ -329,11 +330,12 @@ func (p *Parser) parseStruct() Node {
 	}
 	fields, inits := p.parseStructBody()
 	return Struct{
-		Name:       name,
-		Generics:   generics,
-		Interfaces: interfaces,
-		Fields:     fields,
-		Inits:      inits,
+		Name:        name,
+		Generics:    generics,
+		Interfaces:  interfaces,
+		Fields:      fields,
+		Inits:       inits,
+		Annotations: annotations,
 	}
 }
 
