@@ -614,6 +614,11 @@ type Return struct {
 	Exprs []Node
 }
 
+type Defer struct {
+	base
+	Exprs []Node
+}
+
 type Raise struct {
 	base
 	Expr Node
@@ -632,11 +637,13 @@ func (n VarDecl) tree() *treeNode {
 	return branch(fmt.Sprintf("%s %s :=", prefix, strings.Join(n.Idents, ", ")), nodesToChildren(n.Exprs)...)
 }
 func (n Return) tree() *treeNode   { return branch("return", nodesToChildren(n.Exprs)...) }
+func (n Defer) tree() *treeNode    { return branch("defer", nodesToChildren(n.Exprs)...) }
 func (n Raise) tree() *treeNode    { return branch("raise", nodeTree(n.Expr)) }
 func (n ExprStmt) tree() *treeNode { return nodeTree(n.Expr) }
 
 func (n VarDecl) String() string  { return n.tree().String() }
 func (n Return) String() string   { return n.tree().String() }
+func (n Defer) String() string    { return n.tree().String() }
 func (n Raise) String() string    { return n.tree().String() }
 func (n ExprStmt) String() string { return n.tree().String() }
 

@@ -104,18 +104,12 @@ func (p *Parser) parseStmt() Node {
 		return p.parseExprStmt()
 	case lexer.KeywordReturn:
 		p.advance()
-		var exprs []Node
-		for !p.match(lexer.NewLine) && !p.match(lexer.PunctRBrace) && !p.isEOF() {
-			exprs = append(exprs, p.parseExpr())
-			if !p.match(lexer.PunctComma) {
-				break
-			}
-			p.advance()
-		}
-		if p.match(lexer.NewLine) {
-			p.advance()
-		}
+		exprs := p.exprList()
 		return Return{Exprs: exprs}
+	case lexer.KeywordDefer:
+		p.advance()
+		exprs := p.exprList()
+		return Defer{Exprs: exprs}
 	case lexer.KeywordIf:
 		return p.parseIfStmt()
 	case lexer.KeywordFor:
@@ -155,6 +149,21 @@ func (p *Parser) isDeclAssign() bool {
 			return false
 		}
 	}
+}
+
+func (p *Parser) exprList() []Node {
+	var exprs []Node
+	for !p.match(lexer.NewLine) && !p.match(lexer.PunctRBrace) && !p.isEOF() {
+		exprs = append(exprs, p.parseExpr())
+		if !p.match(lexer.PunctComma) {
+			break
+		}
+		p.advance()
+	}
+	if p.match(lexer.NewLine) {
+		p.advance()
+	}
+	return exprs
 }
 
 func (p *Parser) parseExprStmt() Node {

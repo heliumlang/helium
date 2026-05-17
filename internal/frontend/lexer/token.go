@@ -92,6 +92,7 @@ const (
 	KeywordExport
 	KeywordExtern
 	KeywordCompile
+	KeywordDefer
 )
 
 func initTokenNames() {

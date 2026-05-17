@@ -47,6 +47,7 @@ var reserved = []word{
 	w("export", KeywordExport),
 	w("extern", KeywordExtern),
 	w("comp", KeywordCompile),
+	w("defer", KeywordDefer),
 }
 
 // operator table
