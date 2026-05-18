@@ -139,7 +139,7 @@ func (p *Parser) isDeclAssign() bool {
 			return false
 		}
 		switch tok.Kind() {
-		case lexer.Ident, lexer.KeywordConst:
+		case lexer.Ident, lexer.KeywordConst, lexer.KeywordCompile:
 			i++
 		case lexer.PunctComma:
 			i++
