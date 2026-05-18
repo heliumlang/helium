@@ -143,6 +143,13 @@ func (p *Parser) isDeclAssign() bool {
 			i++
 		case lexer.PunctComma:
 			i++
+		case lexer.PunctColon:
+			for p.inbounds(i) && p.get(i).Kind() != lexer.OpAssignNew {
+				i++
+				if p.index+i > len(p.tokens) {
+					p.error("unterminated variable declaration", tok.Pos())
+				}
+			}
 		case lexer.OpAssignNew:
 			return true
 		default:

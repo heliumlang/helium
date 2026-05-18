@@ -607,6 +607,7 @@ type VarDecl struct {
 	Idents     []string
 	Exprs      []Node
 	Qualifiers *util.Set[string]
+	Type       Node
 }
 
 type Return struct {
@@ -634,7 +635,11 @@ func (n VarDecl) tree() *treeNode {
 	if n.Qualifiers.Len() > 0 {
 		prefix = strings.Join(n.Qualifiers.Slice(), " ")
 	}
-	return branch(fmt.Sprintf("%s %s :=", prefix, strings.Join(n.Idents, ", ")), nodesToChildren(n.Exprs)...)
+	typeStr := ""
+	if n.Type != nil {
+		typeStr = ": " + n.Type.String()
+	}
+	return branch(fmt.Sprintf("%s %s%s :=", prefix, strings.Join(n.Idents, ", "), typeStr), nodesToChildren(n.Exprs)...)
 }
 func (n Return) tree() *treeNode   { return branch("return", nodesToChildren(n.Exprs)...) }
 func (n Defer) tree() *treeNode    { return branch("defer", nodesToChildren(n.Exprs)...) }

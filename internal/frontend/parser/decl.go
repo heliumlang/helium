@@ -75,9 +75,38 @@ func (p *Parser) parseVarDecl() Node {
 		qualifiers.Push(qualif)
 		p.advance()
 	}
-	idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
-		return p.mustRead(lexer.Ident)
-	})
+	// idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
+	// 	return p.mustRead(lexer.Ident)
+	// })
+	var idents []string
+	for !p.oneOf(lexer.OpAssignNew, lexer.PunctColon) {
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
+		if p.oneOf(lexer.OpAssignNew, lexer.PunctColon) {
+			break
+		}
+		idents = append(idents, p.mustRead(lexer.Ident))
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
+		if !p.match(lexer.PunctComma) {
+			break
+		}
+		p.advance()
+		for p.match(lexer.NewLine) {
+			p.advance()
+		}
+	}
+
+	var _type Node = nil
+	if p.match(lexer.PunctColon) {
+		p.advance()
+		_type = p.parseType()
+	}
+
+	p.mustSkip(lexer.OpAssignNew)
+
 	var exprs []Node
 	for {
 		exprs = append(exprs, p.parseExpr())
@@ -89,7 +118,12 @@ func (p *Parser) parseVarDecl() Node {
 	if p.match(lexer.NewLine) {
 		p.advance()
 	}
-	return VarDecl{Idents: idents, Exprs: exprs, Qualifiers: qualifiers}
+	return VarDecl{
+		Idents:     idents,
+		Exprs:      exprs,
+		Qualifiers: qualifiers,
+		Type:       _type,
+	}
 }
 
 func (p *Parser) parseFunc(annotations []Annotation) Node {
