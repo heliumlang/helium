@@ -97,7 +97,7 @@ func (p *Parser) parseStmt() Node {
 		return p.parseUse()
 	case lexer.KeywordExtern:
 		return p.parseExtern()
-	case lexer.Ident, lexer.KeywordConst, lexer.OpIncrement, lexer.OpDecrement, lexer.OpAt:
+	case lexer.Ident, lexer.KeywordConst, lexer.KeywordCompile, lexer.OpIncrement, lexer.OpDecrement, lexer.OpAt:
 		if p.isDeclAssign() {
 			return p.parseVarDecl()
 		}
