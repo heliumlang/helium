@@ -223,6 +223,9 @@ func (l *lexer) Lex(input string) ([]*Token, *heliumerr.Error) {
 		}
 
 		token.line = line
+		if token.Kind() == NewLine {
+			token.line--
+		}
 		token.col = startCol
 		l.tokens = append(l.tokens, token)
 	}
