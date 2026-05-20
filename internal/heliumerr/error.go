@@ -58,7 +58,7 @@ func (e *Error) ClearTrace() *Error {
 	return e
 }
 
-func (e *Error) String() string {
+func (e *Error) Error() string {
 	var str strings.Builder
 
 	if len(e.trace) > 0 {
@@ -99,5 +99,5 @@ func (e *Error) String() string {
 }
 
 func (e *Error) Print() {
-	fmt.Print(e.String())
+	fmt.Print(e.Error())
 }
