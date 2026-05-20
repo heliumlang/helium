@@ -19,6 +19,9 @@ func (p *Parser) parseType() Node {
 	case lexer.KeywordFn:
 		return p.parseFunctionType()
 
+	case lexer.PunctLBracket:
+		return p.parseMapType()
+
 	case lexer.Ident:
 		name := p.mustRead(lexer.Ident)
 
@@ -27,13 +30,11 @@ func (p *Parser) parseType() Node {
 			typeArgs = p.parseTypeArgs()
 		}
 
-		base := BaseType{Typename: name, TypeArgs: typeArgs}
+		base := &BaseType{Typename: name, TypeArgs: typeArgs}
 		base.Optional, base.Throwable = p.checkTypeQualifs()
 
 		if p.match(lexer.PunctLBracket) {
 			return p.parseArrayType(base)
-		} else if p.match(lexer.PunctLBrace) {
-			return p.parseMapType(base)
 		}
 
 		return base
@@ -62,7 +63,7 @@ func (p *Parser) parseFunctionType() Node {
 			returns = append(returns, p.parseType())
 		}
 	}
-	return FunctionType{Args: args, Returns: returns}
+	return &FunctionType{Args: args, Returns: returns}
 }
 
 func (p *Parser) parseArrayType(base Node) Node {
@@ -79,25 +80,30 @@ func (p *Parser) parseArrayType(base Node) Node {
 	}
 	array := node.(ArrayType)
 	array.Optional, array.Throwable = p.checkTypeQualifs()
-	return array
+	return &array
 }
 
-func (p *Parser) parseMapType(base Node) Node {
+func (p *Parser) parseMapType() Node {
 	ti := p.enterRule("parse map type")
 	defer p.traceRm(ti)
-	node := base
-	if !p.match(lexer.PunctLBrace) {
-		p.error("expected left brace in map type", p.get(0).Pos())
+
+	if !p.match(lexer.PunctLBracket) {
+		p.error("expected '[' at start of map type", p.get(0).Pos())
 	}
-	for p.match(lexer.PunctLBrace) {
-		p.mustSkip(lexer.PunctLBrace)
-		key := p.parseType()
-		p.mustSkip(lexer.PunctRBrace)
-		node = MapType{Key: key, Value: node}
+	p.mustSkip(lexer.PunctLBracket)
+	key := p.parseType()
+	p.mustSkip(lexer.PunctRBracket)
+
+	var value Node
+	if p.match(lexer.PunctLBracket) {
+		value = p.parseMapType()
+	} else {
+		value = p.parseType()
 	}
-	maptype := node.(MapType)
+
+	maptype := MapType{Key: key, Value: value}
 	maptype.Optional, maptype.Throwable = p.checkTypeQualifs()
-	return maptype
+	return &maptype
 }
 
 func (p *Parser) parseTypeArgs() []Node {

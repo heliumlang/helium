@@ -75,9 +75,6 @@ func (p *Parser) parseVarDecl() Node {
 		qualifiers.Push(qualif)
 		p.advance()
 	}
-	// idents := list(p, lexer.PunctComma, lexer.OpAssignNew, func() string {
-	// 	return p.mustRead(lexer.Ident)
-	// })
 	var idents []string
 	for !p.oneOf(lexer.OpAssignNew, lexer.PunctColon) {
 		for p.match(lexer.NewLine) {
@@ -118,7 +115,7 @@ func (p *Parser) parseVarDecl() Node {
 	if p.match(lexer.NewLine) {
 		p.advance()
 	}
-	return VarDecl{
+	return &VarDecl{
 		Idents:     idents,
 		Exprs:      exprs,
 		Qualifiers: qualifiers,
@@ -180,7 +177,7 @@ func (p *Parser) parseRecord() Node {
 		generics = p.parseTypeArgs()
 	}
 	fields := p.parseRecordBody()
-	return Record{
+	return &Record{
 		Name:     name,
 		Generics: generics,
 		Fields:   fields,
@@ -234,7 +231,7 @@ func (p *Parser) parseInterface(annotations []Annotation) Node {
 		}
 	}
 	p.mustSkip(lexer.PunctRBrace)
-	return Interface{
+	return &Interface{
 		Name:        name,
 		Generics:    generics,
 		Members:     members,
@@ -257,7 +254,7 @@ func (p *Parser) parseFnSig() Node {
 			returns = append(returns, p.parseType())
 		}
 	}
-	return FnSig{Name: name, Args: args, Returns: returns}
+	return &FnSig{Name: name, Args: args, Returns: returns}
 }
 
 func (p *Parser) parseEnum() Node {
@@ -277,7 +274,7 @@ func (p *Parser) parseEnum() Node {
 		variants = append(variants, p.parseEnumVariant())
 	}
 	p.mustSkip(lexer.PunctRBrace)
-	return Enum{Name: name, Variants: variants}
+	return &Enum{Name: name, Variants: variants}
 }
 
 func (p *Parser) parseEnumVariant() EnumVariant {
@@ -312,7 +309,7 @@ func (p *Parser) parseVariant() Node {
 		fields = append(fields, p.parseVariantField())
 	}
 	p.mustSkip(lexer.PunctRBrace)
-	return Variant{Name: name, Fields: fields}
+	return &Variant{Name: name, Fields: fields}
 }
 
 func (p *Parser) parseVariantField() VariantField {
@@ -333,7 +330,7 @@ func (p *Parser) parseAlias() Node {
 	name := p.mustRead(lexer.Ident)
 	p.mustSkip(lexer.OpAssign)
 	t := p.parseType()
-	return Alias{Name: name, Type: t}
+	return &Alias{Name: name, Type: t}
 }
 
 func (p *Parser) parseConst() Node {
@@ -344,7 +341,7 @@ func (p *Parser) parseConst() Node {
 	name := p.mustRead(lexer.Ident)
 	p.mustSkip(lexer.OpAssign)
 	expr := p.parseExpr()
-	return Const{Type: t, Name: name, Expr: expr}
+	return &Const{Type: t, Name: name, Expr: expr}
 }
 
 func (p *Parser) parseStruct(annotations []Annotation) Node {
@@ -363,7 +360,7 @@ func (p *Parser) parseStruct(annotations []Annotation) Node {
 		p.index--
 	}
 	fields, inits := p.parseStructBody()
-	return Struct{
+	return &Struct{
 		Name:        name,
 		Generics:    generics,
 		Interfaces:  interfaces,
@@ -409,12 +406,12 @@ func (p *Parser) parseInit() Init {
 	return Init{Params: params, Body: body}
 }
 
-func (p *Parser) parseRecordField() RecordField {
+func (p *Parser) parseRecordField() *RecordField {
 	ti := p.enterRule("parse struct field")
 	defer p.traceRm(ti)
 	_type := p.parseType()
 	name := p.mustRead(lexer.Ident)
-	return RecordField{
+	return &RecordField{
 		Name: name,
 		Type: _type,
 	}

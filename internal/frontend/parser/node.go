@@ -6,6 +6,7 @@ package parser
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/heliumlang/helium/internal/frontend/lexer"
@@ -310,6 +311,8 @@ func (n MapType) tree() *treeNode {
 	return br
 }
 
+var re = regexp.MustCompile(`\(\d+\)`)
+
 func (n ArrayType) String() string {
 	label := "[]"
 	if n.Optional {
@@ -318,7 +321,13 @@ func (n ArrayType) String() string {
 	if n.Throwable {
 		label += "!"
 	}
-	return n.Values.String() + label
+	label = n.Values.String() + label
+	nesting := strings.Count(label, "[]")
+	if nesting > 1 {
+		label = re.ReplaceAllString(label, "")
+		label = label + fmt.Sprintf("(%d)", nesting)
+	}
+	return label
 }
 func (n MapType) String() string {
 	label := "{%s}"
