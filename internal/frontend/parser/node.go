@@ -1025,3 +1025,10 @@ func (n Const) tree() *treeNode {
 	return branch("const "+n.Type.String()+" "+n.Name, nodeTree(n.Expr))
 }
 func (n Const) String() string { return n.tree().String() }
+
+type Noop struct {
+	base
+}
+
+func (n Noop) tree() *treeNode { return leaf("noop") }
+func (n Noop) String() string  { return "noop" }

@@ -93,6 +93,9 @@ func (p *Parser) parseStmt() Node {
 	}
 	t := p.get(0)
 	switch t.Kind() {
+	case lexer.KeywordNoop:
+		p.advance()
+		return Noop{}
 	case lexer.KeywordUse:
 		return p.parseUse()
 	case lexer.KeywordExtern:
@@ -217,6 +220,18 @@ func (p *Parser) parseBlock() []Node {
 	ti := p.enterRule("parse block")
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.PunctLBrace)
+	for p.match(lexer.NewLine) {
+		p.advance()
+	}
+	if p.match(lexer.KeywordNoop) {
+		p.advance()
+		if !p.match(lexer.PunctRBrace) {
+			p.error("expected end of block after no-op", p.get(0).Pos())
+			return nil
+		}
+		p.advance()
+		return []Node{Noop{}}
+	}
 	var body []Node
 	for {
 		for p.match(lexer.NewLine) {

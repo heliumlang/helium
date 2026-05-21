@@ -93,6 +93,7 @@ const (
 	KeywordExtern
 	KeywordCompile
 	KeywordDefer
+	KeywordNoop
 )
 
 func initTokenNames() {
