@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/heliumlang/helium/internal/frontend/lexer"
 	"github.com/heliumlang/helium/internal/frontend/parser"
@@ -23,32 +22,15 @@ func (d debug) has(flag debug) bool {
 	return d&flag != 0
 }
 
-func puttime(label string, elapsed time.Duration) {
-	fmt.Fprintf(os.Stderr, "%s took \x1b[34m~%s\x1b[0m \x1b[90m(%s)\x1b[0m\n",
-		label, elapsed.Round(time.Microsecond), elapsed)
-}
-
-func multibench(label string, fn func(), iter int) {
-	start := time.Now()
-	for range iter {
-		fn()
-	}
-	puttime(fmt.Sprintf("%s x%d", label, iter), time.Since(start))
-}
-
 func main() {
 	if err := run(); err != nil {
-		err.Print()
+		err.SetFilename(flag.Args()[0]).Print()
 		os.Exit(1)
 	}
 }
 
 func run() *heliumerr.Error {
-	var (
-		dbgFlag   = flag.Int("debug", int(debugAll), "debug: 1=tokens, 2=ast, 4=types, 7=all, 0=none")
-		bench     = flag.Bool("bench", false, "benchmark lexing and parsing")
-		benchIter = flag.Int("bench-iter", 100, "number of benchmark iterations (requires -bench)")
-	)
+	var dbgFlag = flag.Int("debug", int(debugAll), "debug: 1=tokens, 2=ast, 3=all, 0=none")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: helium [flags] <filename>")
@@ -59,15 +41,16 @@ func run() *heliumerr.Error {
 	args := flag.Args()
 	if len(args) < 1 {
 		flag.Usage()
-		return heliumerr.New("missing required argument: filename", heliumerr.EmptyTrace())
+		fmt.Println("missing required argument: filename")
+		os.Exit(1)
 	}
 
 	dbg := debug(*dbgFlag)
 	path := args[0]
 
-	source, readerr := os.ReadFile(path)
-	if readerr != nil {
-		return heliumerr.New(readerr.Error(), heliumerr.EmptyTrace())
+	source, err := os.ReadFile(path)
+	if err != nil {
+		return heliumerr.Wrap(err)
 	}
 
 	lex := lexer.New()
@@ -75,19 +58,9 @@ func run() *heliumerr.Error {
 
 	var tokens []*lexer.Token
 
-	lexFn := func() {
-		var lexErr *heliumerr.Error
-		tokens, lexErr = lex.Lex(string(source))
-		if lexErr != nil {
-			lexErr.Print()
-			os.Exit(1)
-		}
-	}
-
-	if *bench {
-		multibench("lex", lexFn, *benchIter)
-	} else {
-		lexFn()
+	tokens, err = lex.Lex(string(source))
+	if err != nil {
+		return heliumerr.Wrap(err).SetType("lexical")
 	}
 
 	if dbg.has(debugTokens) {
@@ -99,17 +72,7 @@ func run() *heliumerr.Error {
 
 	parse := parser.New(path, tokens)
 
-	var ast parser.Node
-
-	parseFn := func() {
-		ast = parse.Parse()
-	}
-
-	if *bench {
-		multibench("parse", parseFn, *benchIter)
-	} else {
-		parseFn()
-	}
+	ast := parse.Parse()
 
 	if dbg.has(debugAST) {
 		fmt.Println(ast)

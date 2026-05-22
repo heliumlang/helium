@@ -7,12 +7,10 @@ package lexer
 import (
 	"errors"
 	"fmt"
-
-	"github.com/heliumlang/helium/internal/heliumerr"
 )
 
 type Lexer interface {
-	Lex(input string) ([]*Token, *heliumerr.Error)
+	Lex(input string) ([]*Token, error)
 	SetFilename(fname string)
 }
 
@@ -145,7 +143,7 @@ func (l *lexer) lexChar() (*Token, error) {
 	return NewToken(lexeme, Char), nil
 }
 
-func (l *lexer) Lex(input string) ([]*Token, *heliumerr.Error) {
+func (l *lexer) Lex(input string) ([]*Token, error) {
 	l.input = input
 	l.n = len(input)
 	l.i = 0
@@ -219,7 +217,7 @@ func (l *lexer) Lex(input string) ([]*Token, *heliumerr.Error) {
 		col += l.i - starti
 
 		if err != nil {
-			return nil, heliumerr.New(err.Error(), heliumerr.EmptyTrace()).SetType("lex")
+			return nil, err
 		}
 
 		token.line = line

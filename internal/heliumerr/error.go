@@ -101,3 +101,7 @@ func (e *Error) Error() string {
 func (e *Error) Print() {
 	fmt.Print(e.Error())
 }
+
+func Wrap(e error) *Error {
+	return New(e.Error(), EmptyTrace())
+}
