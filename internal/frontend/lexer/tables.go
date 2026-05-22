@@ -12,7 +12,7 @@ type word struct {
 	kind TokenKind
 }
 
-// keyword table
+// Keyword table.
 var reserved = []word{
 	w("fn", KeywordFn),
 	w("mod", KeywordModule),
@@ -51,7 +51,7 @@ var reserved = []word{
 	w("noop", KeywordNoop),
 }
 
-// operator table
+// Operator table.
 var operators = []word{
 	w("+", OpAdd),
 	w("-", OpSub),
@@ -84,7 +84,7 @@ var operators = []word{
 	w("=>", OpArrow),
 }
 
-// punctuation table
+// Punctuation table.
 var punct = []word{
 	w(".", PunctPeriod),
 	w(",", PunctComma),

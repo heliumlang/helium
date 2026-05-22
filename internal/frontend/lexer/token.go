@@ -124,9 +124,9 @@ func (k TokenKind) String() string {
 }
 
 type Token struct {
-	lexeme            []byte    // the text of the token
-	kind              TokenKind // the kind of the token
-	line, col, offset int       // line, column and offset (end) of the token in the source
+	lexeme            []byte    // The text of the token.
+	kind              TokenKind // The kind of the token.
+	line, col, offset int       // Line, column and offset (end) of the token in the source.
 }
 
 type Position struct{ Line, Col, Offset int }
@@ -146,12 +146,12 @@ func NewToken(lexeme []byte, kind TokenKind) *Token {
 	}
 }
 
-// get text
+// Get text.
 func (t *Token) Lexeme() string {
 	return string(t.lexeme)
 }
 
-// get kind
+// Get kind.
 func (t *Token) Kind() TokenKind {
 	return t.kind
 }
@@ -179,7 +179,7 @@ func (t *Token) Pos() Position {
 	return Position{Line: t.Line(), Col: t.Col(), Offset: t.Offset()}
 }
 
-// get an empty token
+// Get an empty token.
 func ZeroToken() *Token {
 	return NewToken([]byte(""), None)
 }

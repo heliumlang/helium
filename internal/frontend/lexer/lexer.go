@@ -16,11 +16,11 @@ type Lexer interface {
 
 /* built-in lexer */
 type lexer struct {
-	tokens   []*Token // emitted tokens
-	input    string   // source to lex
-	n        int      // source length
-	i        int      // source index
-	filename string   // source's filename
+	tokens   []*Token // Emitted tokens.
+	input    string   // Source to lex.
+	n        int      // Source length.
+	i        int      // Source index.
+	filename string   // Source's filename.
 }
 
 func New() Lexer {
@@ -31,12 +31,12 @@ func (l *lexer) SetFilename(fname string) {
 	l.filename = fname
 }
 
-// check if index < length
+// Check if index < length.
 func (l *lexer) inbounds() bool {
 	return l.i < l.n
 }
 
-// get current character
+// Get current character.
 func (l *lexer) curr() byte {
 	return l.input[l.i]
 }

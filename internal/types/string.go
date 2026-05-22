@@ -89,7 +89,6 @@ func (c *Closure) String() string {
 
 	switch len(c.Returns) {
 	case 0:
-		// nothing
 	case 1:
 		sb.WriteString(" -> ")
 		sb.WriteString(c.Returns[0].String())
@@ -152,7 +151,6 @@ func (fn *Function) String() string {
 
 	switch len(fn.Returns) {
 	case 0:
-		// nothing
 	case 1:
 		sb.WriteString(" -> ")
 		sb.WriteString(fn.Returns[0].String())
@@ -189,7 +187,6 @@ func (fn *InterfaceMethod) String() string {
 
 	switch len(fn.Returns) {
 	case 0:
-		// nothing
 	case 1:
 		sb.WriteString(" -> ")
 		sb.WriteString(fn.Returns[0].String())
