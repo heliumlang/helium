@@ -6,8 +6,8 @@ import (
 )
 
 type TypeTable struct {
-	types   []*TypeInfo
-	aliases map[string]*BaseType
+	types   []*TypeDecl
+	aliases map[string]*Type
 }
 
 func NewTypeTable() *TypeTable {
@@ -24,7 +24,7 @@ func (tt *TypeTable) Lookup(name string) (int, bool) {
 	return -1, false
 }
 
-func (tt *TypeTable) Get(name string) *TypeInfo {
+func (tt *TypeTable) Get(name string) *TypeDecl {
 	for _, t := range tt.types {
 		if t.name == name {
 			return t
@@ -34,7 +34,7 @@ func (tt *TypeTable) Get(name string) *TypeInfo {
 	return nil
 }
 
-func (tt *TypeTable) Register(t *TypeInfo) error {
+func (tt *TypeTable) Register(t *TypeDecl) error {
 	if !t.HasName() {
 		return errors.New("type doesn't have name")
 	}
@@ -47,7 +47,7 @@ func (tt *TypeTable) Register(t *TypeInfo) error {
 	return nil
 }
 
-func (tt *TypeTable) Overwrite(t *TypeInfo) error {
+func (tt *TypeTable) Overwrite(t *TypeDecl) error {
 	if !t.HasName() {
 		return errors.New("type doesn't have name")
 	}
@@ -61,7 +61,7 @@ func (tt *TypeTable) Overwrite(t *TypeInfo) error {
 	return nil
 }
 
-func (tt *TypeTable) Alias(name string, target *BaseType) error {
+func (tt *TypeTable) Alias(name string, target *Type) error {
 	if _, defined := tt.aliases[name]; defined {
 		return fmt.Errorf("alias %s already defined", name)
 	}
@@ -70,7 +70,7 @@ func (tt *TypeTable) Alias(name string, target *BaseType) error {
 	return nil
 }
 
-func (tt *TypeTable) GetAlias(name string) (*BaseType, error) {
+func (tt *TypeTable) GetAlias(name string) (*Type, error) {
 	if _, defined := tt.aliases[name]; !defined {
 		return nil, fmt.Errorf("alias %s not found", name)
 	}
@@ -78,6 +78,6 @@ func (tt *TypeTable) GetAlias(name string) (*BaseType, error) {
 	return tt.aliases[name], nil
 }
 
-func (tt *TypeTable) All() []*TypeInfo {
+func (tt *TypeTable) All() []*TypeDecl {
 	return tt.types
 }

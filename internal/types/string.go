@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (b *BaseType) String() string {
+func (b *Type) String() string {
 	if b == nil {
 		return "<nil>"
 	}
@@ -364,7 +364,7 @@ func (v *Variant) String() string {
 	return sb.String()
 }
 
-func (ti *TypeInfo) String() string {
+func (ti *TypeDecl) String() string {
 	if ti == nil {
 		return "<nil>"
 	}
@@ -376,8 +376,6 @@ func (ti *TypeInfo) String() string {
 
 	var body string
 	switch ti.Kind {
-	case TypeBase:
-		body = ti.Base.String()
 	case TypeRecord:
 		body = ti.Record.String()
 	case TypeStruct:

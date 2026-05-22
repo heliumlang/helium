@@ -7,28 +7,28 @@ import (
 )
 
 type Array struct {
-	Value   *BaseType
+	Value   *Type
 	Nesting int
 }
 
 type Map struct {
-	Key   *BaseType
-	Value *BaseType
+	Key   *Type
+	Value *Type
 }
 
 type Arg struct {
 	Name string
-	Type *BaseType
+	Type *Type
 }
 
 type Closure struct {
 	Args    []*Arg
-	Returns []*BaseType
+	Returns []*Type
 }
 
-type BaseType struct {
+type Type struct {
 	Name      *string
-	TypeArgs  []*BaseType
+	TypeArgs  []*Type
 	Optional  bool
 	Throwable bool
 
@@ -44,23 +44,23 @@ type BaseType struct {
 
 type Field struct {
 	Name    string
-	Type    *BaseType
+	Type    *Type
 	Qualifs []string
 }
 
 type InterfaceMethod struct {
 	Args    []*Arg
-	Returns []*BaseType
+	Returns []*Type
 }
 
 type Function struct {
 	Args     []*Arg
-	Returns  []*BaseType
-	Receiver *BaseType
+	Returns  []*Type
+	Receiver *Type
 }
 
 type Initializer struct {
-	Args []*BaseType
+	Args []*Type
 }
 
 type Record struct {
@@ -70,13 +70,13 @@ type Record struct {
 type Struct struct {
 	Fields []*Field
 	Inits  []*Initializer
-	Impl   []*BaseType
+	Impl   []*Type
 }
 
 type Interface struct {
 	Methods   []*InterfaceMethod
 	Constants []*Field
-	Generics  []*BaseType
+	Generics  []*Type
 }
 
 type EnumCase struct {
@@ -90,7 +90,7 @@ type Enum struct {
 
 type VariantCase struct {
 	Name string
-	Type *BaseType
+	Type *Type
 }
 
 type Variant struct {
@@ -100,8 +100,7 @@ type Variant struct {
 type TypeKind int
 
 const (
-	TypeBase TypeKind = iota
-	TypeRecord
+	TypeRecord TypeKind = iota
 	TypeStruct
 	TypeInterface
 	TypeEnum
@@ -109,12 +108,11 @@ const (
 	TypeFunction
 )
 
-type TypeInfo struct {
+type TypeDecl struct {
 	name    string
 	setName bool
 	Kind    TypeKind
 
-	Base      *BaseType
 	Record    *Record
 	Struct    *Struct
 	Interface *Interface
@@ -123,53 +121,46 @@ type TypeInfo struct {
 	Function  *Function
 }
 
-func (ti *TypeInfo) SetName(name string) {
+func (ti *TypeDecl) SetName(name string) {
 	ti.setName = true
 	ti.name = name
 }
 
-func (ti *TypeInfo) HasName() bool {
+func (ti *TypeDecl) HasName() bool {
 	return ti.setName
 }
 
-func (ti *TypeInfo) GetName() string {
+func (ti *TypeDecl) GetName() string {
 	return ti.name
 }
 
-func RawType(kind TypeKind) *TypeInfo {
-	return &TypeInfo{Kind: kind}
+func RawType(kind TypeKind) *TypeDecl {
+	return &TypeDecl{Kind: kind}
 }
 
-func (b *BaseType) Wrap() *TypeInfo {
-	return &TypeInfo{
-		Kind: TypeBase,
-		Base: b,
-	}
-}
-
-func (b *BaseType) SetOptional(v bool) {
+func (b *Type) SetOptional(v bool) {
 	b.Optional = v
 }
 
-func (b *BaseType) SetThrowable(v bool) {
+func (b *Type) SetThrowable(v bool) {
 	b.Throwable = v
 }
 
-func (b *BaseType) SetQualifs(optional, throwable bool) {
+func (b *Type) SetQualifs(optional, throwable bool) {
 	b.SetOptional(optional)
 	b.SetThrowable(throwable)
 }
 
-func PlainType(name string) *BaseType {
-	return &BaseType{
+func PlainType(name string) *Type {
+	return &Type{
 		Name:    &name,
 		IsArray: false,
 		IsMap:   false,
 	}
 }
 
-func ArrayType(value *BaseType, nesting int) *BaseType {
-	return &BaseType{
+func ArrayType(value *Type, nesting int) *Type {
+	return &Type{
 		Name:    nil,
 		IsArray: true,
 		Array: &Array{
@@ -179,8 +170,8 @@ func ArrayType(value *BaseType, nesting int) *BaseType {
 	}
 }
 
-func MapType(value, key *BaseType) *BaseType {
-	return &BaseType{
+func MapType(value, key *Type) *Type {
+	return &Type{
 		Name:  nil,
 		IsMap: true,
 		Map: &Map{
@@ -190,22 +181,22 @@ func MapType(value, key *BaseType) *BaseType {
 	}
 }
 
-func NewArg(name string, _type *BaseType) *Arg {
+func NewArg(name string, _type *Type) *Arg {
 	return &Arg{
 		Name: name,
 		Type: _type,
 	}
 }
 
-func NewFunction(args []*Arg, rets ...*BaseType) *Function {
+func NewFunction(args []*Arg, rets ...*Type) *Function {
 	return &Function{
 		Args:    args,
 		Returns: rets,
 	}
 }
 
-func ClosureType(args []*Arg, returns ...*BaseType) *BaseType {
-	return &BaseType{
+func ClosureType(args []*Arg, returns ...*Type) *Type {
+	return &Type{
 		Name:      nil,
 		IsClosure: true,
 		Closure: &Closure{
@@ -215,7 +206,7 @@ func ClosureType(args []*Arg, returns ...*BaseType) *BaseType {
 	}
 }
 
-func NewField(name string, _type *BaseType, qualifs ...string) *Field {
+func NewField(name string, _type *Type, qualifs ...string) *Field {
 	return &Field{
 		Name:    name,
 		Type:    _type,
@@ -223,8 +214,8 @@ func NewField(name string, _type *BaseType, qualifs ...string) *Field {
 	}
 }
 
-func RecordType(fields ...*Field) *TypeInfo {
-	return &TypeInfo{
+func RecordType(fields ...*Field) *TypeDecl {
+	return &TypeDecl{
 		Kind: TypeRecord,
 		Record: &Record{
 			Fields: fields,
@@ -232,21 +223,21 @@ func RecordType(fields ...*Field) *TypeInfo {
 	}
 }
 
-func NewInit(args ...*BaseType) *Initializer {
+func NewInit(args ...*Type) *Initializer {
 	return &Initializer{
 		Args: args,
 	}
 }
 
-func FunctionType(args []*Arg, rets ...*BaseType) *TypeInfo {
-	return &TypeInfo{
+func FunctionType(args []*Arg, rets ...*Type) *TypeDecl {
+	return &TypeDecl{
 		Kind:     TypeFunction,
 		Function: NewFunction(args, rets...),
 	}
 }
 
-func StructType(fields []*Field, inits []*Initializer, impl ...*BaseType) *TypeInfo {
-	return &TypeInfo{
+func StructType(fields []*Field, inits []*Initializer, impl ...*Type) *TypeDecl {
+	return &TypeDecl{
 		Kind: TypeStruct,
 		Struct: &Struct{
 			Fields: fields,
@@ -256,15 +247,15 @@ func StructType(fields []*Field, inits []*Initializer, impl ...*BaseType) *TypeI
 	}
 }
 
-func NewIfaceMethod(args []*Arg, rets ...*BaseType) *InterfaceMethod {
+func NewIfaceMethod(args []*Arg, rets ...*Type) *InterfaceMethod {
 	return &InterfaceMethod{
 		Args:    args,
 		Returns: rets,
 	}
 }
 
-func InterfaceType(functions []*InterfaceMethod, constants []*Field, generics ...*BaseType) *TypeInfo {
-	return &TypeInfo{
+func InterfaceType(functions []*InterfaceMethod, constants []*Field, generics ...*Type) *TypeDecl {
+	return &TypeDecl{
 		Kind: TypeInterface,
 		Interface: &Interface{
 			Methods:   functions,
@@ -281,8 +272,8 @@ func NewEnumCase(name string, args ...*Arg) *EnumCase {
 	}
 }
 
-func EnumType(cases ...*EnumCase) *TypeInfo {
-	return &TypeInfo{
+func EnumType(cases ...*EnumCase) *TypeDecl {
+	return &TypeDecl{
 		Kind: TypeEnum,
 		Enum: &Enum{
 			Cases: cases,
@@ -290,15 +281,15 @@ func EnumType(cases ...*EnumCase) *TypeInfo {
 	}
 }
 
-func NewVariantCase(name string, _type *BaseType) *VariantCase {
+func NewVariantCase(name string, _type *Type) *VariantCase {
 	return &VariantCase{
 		Name: name,
 		Type: _type,
 	}
 }
 
-func VariantType(cases ...*VariantCase) *TypeInfo {
-	return &TypeInfo{
+func VariantType(cases ...*VariantCase) *TypeDecl {
+	return &TypeDecl{
 		Kind: TypeVariant,
 		Variant: &Variant{
 			Cases: cases,
@@ -306,7 +297,7 @@ func VariantType(cases ...*VariantCase) *TypeInfo {
 	}
 }
 
-func NodeToType(n parser.Node) *BaseType {
+func NodeToType(n parser.Node) *Type {
 	switch n := n.(type) {
 	case *parser.BaseType:
 		plain := PlainType(n.Typename)
@@ -319,7 +310,7 @@ func NodeToType(n parser.Node) *BaseType {
 	case *parser.FunctionType:
 		var (
 			args []*Arg
-			rets []*BaseType
+			rets []*Type
 		)
 
 		for _, arg := range n.Args {

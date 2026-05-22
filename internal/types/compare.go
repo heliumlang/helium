@@ -1,6 +1,6 @@
 package types
 
-func (b *BaseType) Equal(other *BaseType) bool {
+func (b *Type) Equal(other *Type) bool {
 	if b == nil && other == nil {
 		return true
 	}
@@ -87,7 +87,7 @@ func CompareStringPtr(a, b *string) bool {
 	return *a == *b
 }
 
-func CompareTypeSlice(a, b []*BaseType) bool {
+func CompareTypeSlice(a, b []*Type) bool {
 	if len(a) != len(b) {
 		return false
 	}
