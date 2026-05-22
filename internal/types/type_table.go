@@ -1,4 +1,4 @@
-package check
+package types
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 type TypeTable struct {
 	types   []*TypeInfo
-	aliases map[string]*Base
+	aliases map[string]*BaseType
 }
 
 func NewTypeTable() *TypeTable {
@@ -61,7 +61,7 @@ func (tt *TypeTable) Overwrite(t *TypeInfo) error {
 	return nil
 }
 
-func (tt *TypeTable) Alias(name string, target *Base) error {
+func (tt *TypeTable) Alias(name string, target *BaseType) error {
 	if _, defined := tt.aliases[name]; defined {
 		return fmt.Errorf("alias %s already defined", name)
 	}
@@ -70,7 +70,7 @@ func (tt *TypeTable) Alias(name string, target *Base) error {
 	return nil
 }
 
-func (tt *TypeTable) GetAlias(name string) (*Base, error) {
+func (tt *TypeTable) GetAlias(name string) (*BaseType, error) {
 	if _, defined := tt.aliases[name]; !defined {
 		return nil, fmt.Errorf("alias %s not found", name)
 	}

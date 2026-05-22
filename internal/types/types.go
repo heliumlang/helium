@@ -1,4 +1,4 @@
-package check
+package types
 
 import (
 	"fmt"
@@ -7,28 +7,28 @@ import (
 )
 
 type Array struct {
-	Value   *Base
+	Value   *BaseType
 	Nesting int
 }
 
 type Map struct {
-	Key   *Base
-	Value *Base
+	Key   *BaseType
+	Value *BaseType
 }
 
 type Arg struct {
 	Name string
-	Type *Base
+	Type *BaseType
 }
 
 type Closure struct {
 	Args    []*Arg
-	Returns []*Base
+	Returns []*BaseType
 }
 
-type Base struct {
+type BaseType struct {
 	Name      *string
-	TypeArgs  []*TypeInfo
+	TypeArgs  []*BaseType
 	Optional  bool
 	Throwable bool
 
@@ -44,23 +44,23 @@ type Base struct {
 
 type Field struct {
 	Name    string
-	Type    *Base
+	Type    *BaseType
 	Qualifs []string
 }
 
 type InterfaceMethod struct {
 	Args    []*Arg
-	Returns []*Base
+	Returns []*BaseType
 }
 
 type Function struct {
 	Args     []*Arg
-	Returns  []*Base
-	Receiver *Base
+	Returns  []*BaseType
+	Receiver *BaseType
 }
 
 type Initializer struct {
-	Args []*Base
+	Args []*BaseType
 }
 
 type Record struct {
@@ -70,13 +70,13 @@ type Record struct {
 type Struct struct {
 	Fields []*Field
 	Inits  []*Initializer
-	Impl   []*Base
+	Impl   []*BaseType
 }
 
 type Interface struct {
 	Methods   []*InterfaceMethod
 	Constants []*Field
-	Generics  []*Base
+	Generics  []*BaseType
 }
 
 type EnumCase struct {
@@ -90,7 +90,7 @@ type Enum struct {
 
 type VariantCase struct {
 	Name string
-	Type *Base
+	Type *BaseType
 }
 
 type Variant struct {
@@ -114,7 +114,7 @@ type TypeInfo struct {
 	setName bool
 	Kind    TypeKind
 
-	Base      *Base
+	Base      *BaseType
 	Record    *Record
 	Struct    *Struct
 	Interface *Interface
@@ -140,27 +140,36 @@ func RawType(kind TypeKind) *TypeInfo {
 	return &TypeInfo{Kind: kind}
 }
 
-func (b *Base) Wrap() *TypeInfo {
+func (b *BaseType) Wrap() *TypeInfo {
 	return &TypeInfo{
 		Kind: TypeBase,
 		Base: b,
 	}
 }
 
-func (b *Base) SetQualifs(optional, throwable bool) {
-	b.Optional, b.Throwable = optional, throwable
+func (b *BaseType) SetOptional(v bool) {
+	b.Optional = v
 }
 
-func PlainType(name string) *Base {
-	return &Base{
+func (b *BaseType) SetThrowable(v bool) {
+	b.Throwable = v
+}
+
+func (b *BaseType) SetQualifs(optional, throwable bool) {
+	b.SetOptional(optional)
+	b.SetThrowable(throwable)
+}
+
+func PlainType(name string) *BaseType {
+	return &BaseType{
 		Name:    &name,
 		IsArray: false,
 		IsMap:   false,
 	}
 }
 
-func ArrayType(value *Base, nesting int) *Base {
-	return &Base{
+func ArrayType(value *BaseType, nesting int) *BaseType {
+	return &BaseType{
 		Name:    nil,
 		IsArray: true,
 		Array: &Array{
@@ -170,8 +179,8 @@ func ArrayType(value *Base, nesting int) *Base {
 	}
 }
 
-func MapType(value, key *Base) *Base {
-	return &Base{
+func MapType(value, key *BaseType) *BaseType {
+	return &BaseType{
 		Name:  nil,
 		IsMap: true,
 		Map: &Map{
@@ -181,22 +190,22 @@ func MapType(value, key *Base) *Base {
 	}
 }
 
-func NewArg(name string, _type *Base) *Arg {
+func NewArg(name string, _type *BaseType) *Arg {
 	return &Arg{
 		Name: name,
 		Type: _type,
 	}
 }
 
-func NewFunction(args []*Arg, rets ...*Base) *Function {
+func NewFunction(args []*Arg, rets ...*BaseType) *Function {
 	return &Function{
 		Args:    args,
 		Returns: rets,
 	}
 }
 
-func ClosureType(args []*Arg, returns ...*Base) *Base {
-	return &Base{
+func ClosureType(args []*Arg, returns ...*BaseType) *BaseType {
+	return &BaseType{
 		Name:      nil,
 		IsClosure: true,
 		Closure: &Closure{
@@ -206,7 +215,7 @@ func ClosureType(args []*Arg, returns ...*Base) *Base {
 	}
 }
 
-func NewField(name string, _type *Base, qualifs ...string) *Field {
+func NewField(name string, _type *BaseType, qualifs ...string) *Field {
 	return &Field{
 		Name:    name,
 		Type:    _type,
@@ -223,20 +232,20 @@ func RecordType(fields ...*Field) *TypeInfo {
 	}
 }
 
-func NewInit(args ...*Base) *Initializer {
+func NewInit(args ...*BaseType) *Initializer {
 	return &Initializer{
 		Args: args,
 	}
 }
 
-func FunctionType(args []*Arg, rets ...*Base) *TypeInfo {
+func FunctionType(args []*Arg, rets ...*BaseType) *TypeInfo {
 	return &TypeInfo{
 		Kind:     TypeFunction,
 		Function: NewFunction(args, rets...),
 	}
 }
 
-func StructType(fields []*Field, inits []*Initializer, impl ...*Base) *TypeInfo {
+func StructType(fields []*Field, inits []*Initializer, impl ...*BaseType) *TypeInfo {
 	return &TypeInfo{
 		Kind: TypeStruct,
 		Struct: &Struct{
@@ -247,14 +256,14 @@ func StructType(fields []*Field, inits []*Initializer, impl ...*Base) *TypeInfo 
 	}
 }
 
-func NewIfaceMethod(args []*Arg, rets ...*Base) *InterfaceMethod {
+func NewIfaceMethod(args []*Arg, rets ...*BaseType) *InterfaceMethod {
 	return &InterfaceMethod{
 		Args:    args,
 		Returns: rets,
 	}
 }
 
-func InterfaceType(functions []*InterfaceMethod, constants []*Field, generics ...*Base) *TypeInfo {
+func InterfaceType(functions []*InterfaceMethod, constants []*Field, generics ...*BaseType) *TypeInfo {
 	return &TypeInfo{
 		Kind: TypeInterface,
 		Interface: &Interface{
@@ -281,7 +290,7 @@ func EnumType(cases ...*EnumCase) *TypeInfo {
 	}
 }
 
-func NewVariantCase(name string, _type *Base) *VariantCase {
+func NewVariantCase(name string, _type *BaseType) *VariantCase {
 	return &VariantCase{
 		Name: name,
 		Type: _type,
@@ -297,12 +306,12 @@ func VariantType(cases ...*VariantCase) *TypeInfo {
 	}
 }
 
-func NodeToType(n parser.Node) *Base {
+func NodeToType(n parser.Node) *BaseType {
 	switch n := n.(type) {
 	case *parser.BaseType:
 		plain := PlainType(n.Typename)
 		for _, arg := range n.TypeArgs {
-			plain.TypeArgs = append(plain.TypeArgs, NodeToType(arg).Wrap())
+			plain.TypeArgs = append(plain.TypeArgs, NodeToType(arg))
 		}
 		plain.SetQualifs(n.Optional, n.Throwable)
 		return plain
@@ -310,7 +319,7 @@ func NodeToType(n parser.Node) *Base {
 	case *parser.FunctionType:
 		var (
 			args []*Arg
-			rets []*Base
+			rets []*BaseType
 		)
 
 		for _, arg := range n.Args {

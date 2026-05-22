@@ -1,11 +1,11 @@
-package check
+package types
 
 import (
 	"fmt"
 	"strings"
 )
 
-func (b *Base) String() string {
+func (b *BaseType) String() string {
 	if b == nil {
 		return "<nil>"
 	}
