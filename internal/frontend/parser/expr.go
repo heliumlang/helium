@@ -348,7 +348,7 @@ func (p *Parser) parseMapLit() Node {
 	defer p.traceRm(ti)
 	p.mustSkip(lexer.PunctLBrace)
 	elements := list[MapPair](p, lexer.PunctComma, lexer.PunctRBrace, p.parseMapPair)
-	return MapLit{Elements: elements}
+	return MapLit{Pairs: elements}
 }
 
 func (p *Parser) parseMapPair() MapPair {

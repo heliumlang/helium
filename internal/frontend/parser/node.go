@@ -391,14 +391,14 @@ type MapPair struct {
 }
 type MapLit struct {
 	base
-	Elements []MapPair
+	Pairs []MapPair
 }
 
 func (n MapPair) tree() *treeNode {
 	return branch("pair", nodesToChildren([]Node{n.Key, n.Value})...)
 }
 func (n MapLit) tree() *treeNode {
-	return branch("{}", nodesToChildren(n.Elements)...)
+	return branch("{}", nodesToChildren(n.Pairs)...)
 }
 
 func (n MapPair) String() string { return n.tree().String() }
