@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/heliumlang/helium/internal/compiler/check"
 	"github.com/heliumlang/helium/internal/frontend/lexer"
 	"github.com/heliumlang/helium/internal/frontend/parser"
 	"github.com/heliumlang/helium/internal/heliumerr"
@@ -17,8 +16,7 @@ type debug int
 const (
 	debugTokens debug = 1 << iota
 	debugAST
-	debugTypes
-	debugAll = debugTokens | debugAST | debugTypes
+	debugAll = debugTokens | debugAST
 )
 
 func (d debug) has(flag debug) bool {
@@ -115,20 +113,6 @@ func run() *heliumerr.Error {
 
 	if dbg.has(debugAST) {
 		fmt.Println(ast)
-	}
-
-	err, typeTable := check.Check(path, ast)
-	if dbg.has(debugTypes) {
-		fmt.Println()
-		fmt.Printf("Found %d types\n", len(typeTable.All()))
-		fmt.Println()
-		for _, t := range typeTable.All() {
-			fmt.Println(t)
-		}
-	}
-
-	if err != nil {
-		return err
 	}
 
 	return nil
