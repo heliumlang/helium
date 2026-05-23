@@ -1,5 +1,5 @@
 /*
- * Polo's lexer
+ * Helium's lexer
  */
 
 package lexer
