@@ -30,6 +30,7 @@ const (
 
 	OpLoadLocal
 	OpStoreLocal
+	OpLoadExtern
 
 	OpAdd
 	OpSub
@@ -50,6 +51,9 @@ const (
 	OpNot
 	OpInc
 	OpDec
+
+	OpMakeIter
+	OpNextIter
 )
 
 var codeToStr = map[OpCode]string{
@@ -69,6 +73,7 @@ var codeToStr = map[OpCode]string{
 	OpPop:        "POP",
 	OpDup:        "DUP",
 	OpLoadLocal:  "LOAD_LOCAL",
+	OpLoadExtern: "LOAD_EXTERN",
 	OpStoreLocal: "STORE_LOCAL",
 	OpAdd:        "ADD",
 	OpSub:        "SUB",
@@ -87,6 +92,8 @@ var codeToStr = map[OpCode]string{
 	OpNot:        "NOT",
 	OpInc:        "INCREMENT",
 	OpDec:        "DECREMENT",
+	OpMakeIter:   "MAKE_ITER",
+	OpNextIter:   "NEXT_ITER",
 }
 
 var operandCountTable = map[OpCode]uint16{
@@ -97,9 +104,14 @@ var operandCountTable = map[OpCode]uint16{
 	OpCallNative: 2,
 	OpPushConst:  1,
 	OpLoadLocal:  1,
+	OpLoadExtern: 1,
 	OpStoreLocal: 1,
 	OpPushArr:    1,
 	OpPushMap:    1,
+	OpReturn:     1,
+	OpInc:        1,
+	OpDec:        1,
+	OpNextIter:   1,
 }
 
 // Encodes an OpCode and its operand count into a single ByteCode.
@@ -135,9 +147,11 @@ func NewChunk() *Chunk {
 }
 
 // Encodes an instruction (opcode + operands) and appends it to the chunk.
-func (c *Chunk) Emit(op OpCode, operands ...ByteCode) {
+func (c *Chunk) Emit(op OpCode, operands ...ByteCode) int {
+	index := len(c.code)
 	c.code = append(c.code, op.Pack(uint16(len(operands))))
 	c.code = append(c.code, operands...)
+	return index
 }
 
 // Appends another chunk's bytecode onto this one.
@@ -166,11 +180,6 @@ func (c Chunk) Last() int {
 	return len(c.code) - 1
 }
 
-// Emits a dummy jump.
-func (c *Chunk) DummyJump() {
-	c.Emit(OpJmp, 0)
-}
-
 // Sets the operand of a jump instruction at index to target.
 func (c *Chunk) Patch(index int, target int) error {
 	if index < 0 || index >= len(c.code) {
@@ -181,8 +190,8 @@ func (c *Chunk) Patch(index int, target int) error {
 	}
 
 	op, operandCount := c.code[index].Decode()
-	if op != OpJmp {
-		return fmt.Errorf("must patch a jump")
+	if op != OpJmp && op != OpJmpIfFalse && op != OpJmpIfTrue && op != OpNextIter {
+		return fmt.Errorf("must patch a jump, got %s", op)
 	}
 	if operandCount != 1 {
 		return fmt.Errorf("jumps must have only one operand")
@@ -207,7 +216,9 @@ func joinOperands(operands []ByteCode) string {
 			if i != 0 {
 				str.WriteString(", ")
 			}
+			str.WriteString("\x1b[33m")
 			str.WriteString(strconv.FormatUint(uint64(v), 10))
+			str.WriteString("\x1b[0m")
 		}
 	}
 	return str.String()
@@ -217,7 +228,7 @@ func joinOperands(operands []ByteCode) string {
 func (c Chunk) String() string {
 	var str strings.Builder
 	// lastI := 0
-	str.WriteString("Index\tOperation\tOperands\n")
+	str.WriteString("\x1b[90mIndex\tOperation\tOperands\n\x1b[0m")
 	for i := 0; i < len(c.code); {
 		op, count := c.code[i].Decode()
 		operands := c.ReadOperands(i+1, count)
@@ -227,7 +238,7 @@ func (c Chunk) String() string {
 		opStr := op.String()
 		fmt.Fprintf(
 			&str,
-			"%05d%s%s%s%s\n",
+			"\x1b[35m%05d\x1b[0m%s\x1b[32m%s\x1b[0m%s%s\n",
 			i,
 			"\t",
 			opStr,

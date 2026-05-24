@@ -43,7 +43,7 @@ func ConstFromBool(v bool) Const {
 
 func (c Const) Int() int64     { return c.i }
 func (c Const) Float() float64 { return c.f }
-func (c Const) String() string { return c.str }
+func (c Const) Str() string    { return c.str }
 func (c Const) Char() byte     { return c.ch }
 func (c Const) Bool() bool     { return c.b }
 
@@ -70,4 +70,22 @@ func (c Const) Bytes() []byte {
 		}
 	}
 	return buf
+}
+
+// Get the constant as any.
+func (c Const) Any() any {
+	switch c.Type {
+	case ConstInt:
+		return c.i
+	case ConstFloat:
+		return c.f
+	case ConstString:
+		return c.str
+	case ConstChar:
+		return c.ch
+	case ConstBool:
+		return c.b
+	}
+
+	return nil
 }

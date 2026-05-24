@@ -15,9 +15,9 @@ func (c *Compiler) Serialize() []byte {
 
 	// native table
 	buf = appendU16(buf, uint16(len(c.natives)))
-	for _, name := range c.natives {
-		buf = appendU16(buf, uint16(len(name)))
-		buf = append(buf, []byte(name)...)
+	for _, native := range c.natives {
+		buf = appendU16(buf, uint16(len(native.name)))
+		buf = append(buf, []byte(native.name)...)
 	}
 
 	// function table

@@ -76,13 +76,17 @@ func (p *Parser) parseExtern() Node {
 	p.mustSkip(lexer.KeywordExtern)
 	if p.match(lexer.PunctLBrace) {
 		p.advance()
-		members := list(p, lexer.PunctComma, lexer.PunctRBrace, func() string {
-			return p.mustRead(lexer.Ident)
-		})
+		members := list(p, lexer.PunctComma, lexer.PunctRBrace, p.parseExternMember)
 		return Extern{Members: members}
 	} else {
-		return Extern{Members: []string{p.mustRead(lexer.Ident)}}
+		return Extern{Members: []ExternMember{p.parseExternMember()}}
 	}
+}
+
+func (p *Parser) parseExternMember() ExternMember {
+	_type := p.parseType()
+	name := p.mustRead(lexer.Ident)
+	return ExternMember{Type: _type, Name: name}
 }
 
 func (p *Parser) parseStmt() Node {
@@ -193,7 +197,7 @@ func (p *Parser) parseIfStmt() Node {
 	cond := p.parseExpr()
 	body := p.parseBlock()
 	var elifs []Elif
-	var els *[]Node
+	var els []Node = nil
 	for {
 		for p.match(lexer.NewLine) {
 			p.advance()
@@ -209,7 +213,7 @@ func (p *Parser) parseIfStmt() Node {
 			elifs = append(elifs, Elif{Cond: elifCond, Body: elifBody})
 		} else {
 			elseBody := p.parseBlock()
-			els = &elseBody
+			els = elseBody
 			break
 		}
 	}

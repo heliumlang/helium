@@ -187,9 +187,14 @@ type Use struct {
 	Path    []string
 	Members []string
 }
+type ExternMember struct {
+	base
+	Name string
+	Type Node
+}
 type Extern struct {
 	base
-	Members []string
+	Members []ExternMember
 }
 
 func (n Use) tree() *treeNode {
@@ -207,15 +212,17 @@ func (n Use) tree() *treeNode {
 	return nil
 }
 func (n Extern) tree() *treeNode {
-	return branch("extern", arrToNodes(n.Members, func(v string) *treeNode {
-		return leaf(v)
-	})...)
+	return branch("extern", nodesToChildren(n.Members)...)
+}
+func (n ExternMember) tree() *treeNode {
+	return branch("extern member", leaf(n.Name), leaf(n.Type.String()))
 }
 func (n Module) tree() *treeNode { return leaf(fmt.Sprintf("Module(%q)", n.Name)) }
 
-func (n Module) String() string { return n.tree().String() }
-func (n Extern) String() string { return n.tree().String() }
-func (n Use) String() string    { return n.tree().String() }
+func (n Module) String() string       { return n.tree().String() }
+func (n Extern) String() string       { return n.tree().String() }
+func (n ExternMember) String() string { return n.tree().String() }
+func (n Use) String() string          { return n.tree().String() }
 
 type BaseType struct {
 	base
@@ -672,7 +679,7 @@ type IfStmt struct {
 	Cond  Node
 	Body  []Node
 	Elifs []Elif
-	Else  *[]Node
+	Else  []Node
 }
 
 type For struct {
@@ -703,7 +710,7 @@ func (n IfStmt) tree() *treeNode {
 		children = append(children, elif.tree())
 	}
 	if n.Else != nil {
-		children = append(children, branch("else", nodesToChildren(*n.Else)...))
+		children = append(children, branch("else", nodesToChildren(n.Else)...))
 	}
 	return branch("if", children...)
 }

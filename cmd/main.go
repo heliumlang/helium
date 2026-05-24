@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/heliumlang/helium/internal/compiler"
 	"github.com/heliumlang/helium/internal/frontend/lexer"
 	"github.com/heliumlang/helium/internal/frontend/parser"
 	"github.com/heliumlang/helium/internal/heliumerr"
@@ -23,10 +25,16 @@ func (d debug) has(flag debug) bool {
 }
 
 func main() {
+	start := time.Now()
+
 	if err := run(); err != nil {
 		err.SetFilename(flag.Args()[0]).Print()
 		os.Exit(1)
 	}
+
+	elapsed := time.Since(start)
+	fmt.Printf("Took \x1b[32m%s\x1b[0m\n", elapsed)
+
 }
 
 func run() *heliumerr.Error {
@@ -77,6 +85,23 @@ func run() *heliumerr.Error {
 	if dbg.has(debugAST) {
 		fmt.Println(ast)
 	}
+
+	c := compiler.NewCompiler()
+	err = c.Compile(ast)
+	if err != nil {
+		heliumerr.Wrap(err).SetType("compile").SetFilename(path).Print()
+		os.Exit(1)
+	}
+
+	for _, t := range c.GetTypes() {
+		fmt.Println()
+		fmt.Println(t)
+	}
+
+	fmt.Println(c.Dissasemble())
+	fmt.Println()
+	fmt.Println("=== full bytecode ===")
+	fmt.Println(c.StringSerialize())
 
 	return nil
 }
