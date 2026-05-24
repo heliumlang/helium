@@ -6,6 +6,10 @@ type Stack[T any] struct {
 	items []T
 }
 
+func NewStack[T any]() *Stack[T] {
+	return &Stack[T]{}
+}
+
 func (s *Stack[T]) Pop() T {
 	v := s.items[len(s.items)-1]
 	s.items = s.items[:len(s.items)-1]
@@ -24,4 +28,8 @@ func (s *Stack[T]) Get(i int) (*T, error) {
 
 	v := s.items[i]
 	return &v, nil
+}
+
+func (s *Stack[T]) Slice() []T {
+	return s.items
 }

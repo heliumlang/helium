@@ -14,15 +14,29 @@ type FuncMeta struct {
 	chunk  *Chunk
 }
 
+func (fn FuncMeta) Name() string       { return fn.name }
+func (fn FuncMeta) ArgCount() uint16   { return fn.args }
+func (fn FuncMeta) LocalCount() uint16 { return fn.locals }
+func (fn FuncMeta) Body() *Chunk       { return fn.chunk }
+
 type localVar struct {
 	name  string
 	depth int
+	t     *types.Type
 }
 
-type nativeFunc struct {
-	name  string
-	arity int
+func (v localVar) Name() string      { return v.name }
+func (v localVar) Type() *types.Type { return v.t }
+
+type Native struct {
+	name    string
+	arity   int
+	returns *types.Type
 }
+
+func (fn Native) Name() string     { return fn.name }
+func (fn Native) ArgCount() int    { return fn.arity }
+func (fn Native) Ret() *types.Type { return fn.returns }
 
 type extern struct {
 	name string
@@ -34,27 +48,48 @@ type Compiler struct {
 	current    *Chunk
 	constPool  []Const
 	functions  []FuncMeta
-	natives    []nativeFunc
+	natives    []Native
 	locals     []localVar
 	externs    []extern
 	scopeDepth int
 	err        error
 	ttable     *types.TypeTable
 	inFunc     bool
+	funcName   string
 }
 
 func NewCompiler() *Compiler {
 	c := &Compiler{
-		module:  "",
-		current: NewChunk(),
-		err:     nil,
-		ttable:  types.NewTypeTable(),
-		inFunc:  false,
+		module:   "",
+		current:  NewChunk(),
+		err:      nil,
+		ttable:   types.NewTypeTable(),
+		inFunc:   false,
+		funcName: "",
 	}
 
-	c.registerNative("println", -1)
+	c.registerNative("println", -1, types.VoidType())
 
 	return c
+}
+
+type Program struct {
+	Constants []Const
+	Functions []FuncMeta
+	Natives   []Native
+}
+
+func (c *Compiler) Program() Program {
+	return Program{
+		Constants: c.constPool,
+		Functions: c.functions,
+		Natives:   c.natives,
+	}
+}
+
+// Get functions.
+func (c *Compiler) GetFunctions() []FuncMeta {
+	return c.functions
 }
 
 // Adds a constant to the constant pool or, if it's already in it,
@@ -81,11 +116,11 @@ func (c *Compiler) resolveNative(name string) (ByteCode, bool) {
 
 // Register a native function in the natives table. -1 arity means
 // the function has infinite arguments.
-func (c *Compiler) registerNative(name string, arity int) ByteCode {
+func (c *Compiler) registerNative(name string, arity int, ret *types.Type) ByteCode {
 	if idx, ok := c.resolveNative(name); ok {
 		return ByteCode(idx)
 	}
-	c.natives = append(c.natives, nativeFunc{name: name, arity: arity})
+	c.natives = append(c.natives, Native{name: name, arity: arity, returns: ret})
 	return ByteCode(len(c.natives) - 1)
 }
 
@@ -111,10 +146,9 @@ func (c *Compiler) resolveFunc(name string) (ByteCode, bool) {
 }
 
 // Add a new local.
-func (c *Compiler) addLocal(name string) ByteCode {
-	c.locals = append(c.locals, localVar{name, c.scopeDepth})
-	slot := len(c.locals)
-	return ByteCode(slot - 1)
+func (c *Compiler) addLocal(name string, typ *types.Type) ByteCode {
+	c.locals = append(c.locals, localVar{name, c.scopeDepth, typ})
+	return ByteCode(len(c.locals) - 1)
 }
 
 // Get a local/extern by its name.
@@ -171,7 +205,7 @@ func (c *Compiler) Dissasemble() string {
 	str.WriteString("=== const pool ===")
 	str.WriteString("\n")
 	for i, v := range c.constPool {
-		fmt.Fprintf(&str, "[\x1b[35m%d\x1b[0m]: \x1b[33m%v\x1b[0m\n", i, v.Any())
+		fmt.Fprintf(&str, "[\x1b[35m%d\x1b[0m]: \x1b[33m%s\x1b[0m\n", i, v)
 	}
 
 	str.WriteString("\n")

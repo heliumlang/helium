@@ -32,12 +32,18 @@ const (
 	OpStoreLocal
 	OpLoadExtern
 
-	OpAdd
-	OpSub
-	OpMul
-	OpDiv
-	OpMod
-	OpNeg
+	OpAddInt
+	OpAddFloat
+	OpSubInt
+	OpSubFloat
+	OpMulInt
+	OpMulFloat
+	OpDivInt
+	OpDivFloat
+	OpModInt
+	OpModFloat
+	OpNegInt
+	OpNegFloat
 
 	OpEq
 	OpNeq
@@ -75,12 +81,18 @@ var codeToStr = map[OpCode]string{
 	OpLoadLocal:  "LOAD_LOCAL",
 	OpLoadExtern: "LOAD_EXTERN",
 	OpStoreLocal: "STORE_LOCAL",
-	OpAdd:        "ADD",
-	OpSub:        "SUB",
-	OpMul:        "MUL",
-	OpDiv:        "DIV",
-	OpMod:        "MOD",
-	OpNeg:        "NEG",
+	OpAddInt:     "ADD_INT",
+	OpAddFloat:   "ADD_FLOAT",
+	OpSubInt:     "SUB_INT",
+	OpSubFloat:   "SUB_FLOAT",
+	OpMulInt:     "MUL_INT",
+	OpMulFloat:   "MUL_FLOAT",
+	OpDivInt:     "DIV_INT",
+	OpDivFloat:   "DIV_FLOAT",
+	OpModInt:     "MOD_INT",
+	OpModFloat:   "MOD_FLOAT",
+	OpNegInt:     "NEG_INT",
+	OpNegFloat:   "NEG_FLOAT",
 	OpEq:         "EQ",
 	OpNeq:        "NEQ",
 	OpLt:         "LT",
@@ -146,6 +158,9 @@ func NewChunk() *Chunk {
 	return &Chunk{}
 }
 
+// Get the chunk's code.
+func (c Chunk) Code() []ByteCode { return c.code }
+
 // Encodes an instruction (opcode + operands) and appends it to the chunk.
 func (c *Chunk) Emit(op OpCode, operands ...ByteCode) int {
 	index := len(c.code)
@@ -185,7 +200,7 @@ func (c *Chunk) Patch(index int, target int) error {
 	if index < 0 || index >= len(c.code) {
 		return fmt.Errorf("index %d out of bounds", index)
 	}
-	if target < 0 || target >= len(c.code) {
+	if target < 0 || target >= len(c.code)+1 {
 		return fmt.Errorf("jump target %d out of bounds", target)
 	}
 
@@ -206,7 +221,7 @@ func (c *Chunk) PatchToEnd(index int) error {
 	if c.Empty() {
 		return fmt.Errorf("chunk is empty")
 	}
-	return c.Patch(index, c.Last())
+	return c.Patch(index, c.Last()+1)
 }
 
 func joinOperands(operands []ByteCode) string {

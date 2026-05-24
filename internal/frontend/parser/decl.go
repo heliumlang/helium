@@ -63,7 +63,7 @@ func (p *Parser) parseAnnotation() Annotation {
 func (p *Parser) parseVarDecl() Node {
 	ti := p.enterRule("parse variable declaration")
 	defer p.traceRm(ti)
-	qualifiers := &util.Set[string]{}
+	qualifiers := util.NewSet[string]()
 	for p.oneOf(
 		lexer.KeywordConst,
 		lexer.KeywordCompile,
@@ -420,7 +420,7 @@ func (p *Parser) parseRecordField() *RecordField {
 func (p *Parser) parseStructField() StructField {
 	ti := p.enterRule("parse struct field")
 	defer p.traceRm(ti)
-	qualifiers := &util.Set[string]{}
+	qualifiers := util.NewSet[string]()
 	for p.oneOf(
 		lexer.KeywordConst,
 		lexer.KeywordExport,

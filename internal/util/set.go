@@ -9,6 +9,10 @@ type Set[T comparable] struct {
 	slice []T
 }
 
+func NewSet[T comparable]() *Set[T] {
+	return &Set[T]{}
+}
+
 func (s *Set[T]) Push(v T) error {
 	if s.InSet(v) {
 		return errors.New("element already in set")

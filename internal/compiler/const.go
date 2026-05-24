@@ -1,6 +1,9 @@
 package compiler
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type ConstType int
 
@@ -73,7 +76,7 @@ func (c Const) Bytes() []byte {
 }
 
 // Get the constant as any.
-func (c Const) Any() any {
+func (c Const) Value() any {
 	switch c.Type {
 	case ConstInt:
 		return c.i
@@ -88,4 +91,21 @@ func (c Const) Any() any {
 	}
 
 	return nil
+}
+
+// Get the constant as a string.
+func (c Const) String() string {
+	switch c.Type {
+	case ConstInt:
+		return fmt.Sprintf("\x1b[33m%d\x1b[0m", c.i)
+	case ConstFloat:
+		return fmt.Sprintf("\x1b[33m%f\x1b[0m", c.f)
+	case ConstString:
+		return fmt.Sprintf("\x1b[32m%q\x1b[0m", c.str)
+	case ConstChar:
+		return fmt.Sprintf("\x1b[35m'%c'\x1b[0m", c.ch)
+	case ConstBool:
+		return fmt.Sprintf("\x1b[37m%t\x1b[0m", c.b)
+	}
+	return ""
 }

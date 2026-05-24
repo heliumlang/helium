@@ -151,6 +151,16 @@ func (b *Type) SetQualifs(optional, throwable bool) {
 	b.SetThrowable(throwable)
 }
 
+func VoidType() *Type {
+	s := "void"
+	return &Type{
+		IsArray:   false,
+		IsMap:     false,
+		IsClosure: false,
+		Name:      &s,
+	}
+}
+
 func PlainType(name string) *Type {
 	return &Type{
 		Name:    &name,

@@ -4,12 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/heliumlang/helium/internal/compiler"
 	"github.com/heliumlang/helium/internal/frontend/lexer"
 	"github.com/heliumlang/helium/internal/frontend/parser"
 	"github.com/heliumlang/helium/internal/heliumerr"
+	"github.com/heliumlang/helium/internal/vm"
 )
 
 type debug int
@@ -25,20 +25,19 @@ func (d debug) has(flag debug) bool {
 }
 
 func main() {
-	start := time.Now()
+	// start := time.Now()
 
 	if err := run(); err != nil {
 		err.SetFilename(flag.Args()[0]).Print()
 		os.Exit(1)
 	}
 
-	elapsed := time.Since(start)
-	fmt.Printf("Took \x1b[32m%s\x1b[0m\n", elapsed)
-
+	// elapsed := time.Since(start)
+	// fmt.Printf("Took \x1b[32m%s\x1b[0m\n", elapsed)
 }
 
 func run() *heliumerr.Error {
-	var dbgFlag = flag.Int("debug", int(debugAll), "debug: 1=tokens, 2=ast, 3=all, 0=none")
+	var dbgFlag = flag.Int("debug", 0, "debug: 1=tokens, 2=ast, 3=all, 0=none")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: helium [flags] <filename>")
@@ -87,21 +86,18 @@ func run() *heliumerr.Error {
 	}
 
 	c := compiler.NewCompiler()
-	err = c.Compile(ast)
-	if err != nil {
-		heliumerr.Wrap(err).SetType("compile").SetFilename(path).Print()
+	if err := c.Compile(ast); err != nil {
+		heliumerr.Wrap(err).SetType("compile").SetFilename("path").Print()
+		fmt.Println(c.Dissasemble())
 		os.Exit(1)
 	}
 
-	for _, t := range c.GetTypes() {
-		fmt.Println()
-		fmt.Println(t)
-	}
-
 	fmt.Println(c.Dissasemble())
-	fmt.Println()
-	fmt.Println("=== full bytecode ===")
-	fmt.Println(c.StringSerialize())
+
+	vm := vm.New(c.Program(), vm.GetSTD())
+	if err := vm.Run(); err != nil {
+		heliumerr.Wrap(err).SetType("runtime").SetFilename("path").Print()
+	}
 
 	return nil
 }
